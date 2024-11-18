@@ -6,3 +6,11 @@ void printDebug(dynamic message, [String? tag]) {
     print(m);
   }
 }
+
+extension StringExtension on String {
+  String capitalize() {
+    if(length == 0) return this;
+    if(length == 1) return toUpperCase();
+    return "${this[0].toUpperCase()}${this.substring(1)}";
+  }
+}

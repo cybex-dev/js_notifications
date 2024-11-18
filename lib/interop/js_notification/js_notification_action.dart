@@ -1,8 +1,8 @@
 import '../../core/serializable.dart';
+import '../../utils/utils.dart';
 
 /// Wrapper object for NotificationAction
 class JSNotificationAction implements Serializable {
-
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/actions#action
   final String action;
 
@@ -12,7 +12,20 @@ class JSNotificationAction implements Serializable {
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/actions#icon
   final String? icon;
 
-  JSNotificationAction({required this.action, required this.title, this.icon});
+  const JSNotificationAction({required this.action, required this.title, this.icon});
+
+  factory JSNotificationAction.fromTitle(String title, {bool actionToLowerCase = true}) {
+    final action = actionToLowerCase ? title.toLowerCase() : title;
+    return JSNotificationAction(action: action, title: title);
+  }
+
+  factory JSNotificationAction.fromAction(String action, {bool capatlizeTitle = true}) {
+    final title = capatlizeTitle ? action.capitalize() : action;
+    return JSNotificationAction(action: action, title: title);
+  }
+
+  factory JSNotificationAction.simpleWithIcon(String title, String icon) =>
+      JSNotificationAction(action: title, title: title, icon: icon);
 
   @override
   Map<String, dynamic> toMap() {
