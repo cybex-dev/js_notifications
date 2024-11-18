@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:html' as html;
 
+import 'package:flutter/foundation.dart';
 import 'package:js_notifications/core/core.dart';
 
 import '../const/const.dart';
 import '../core/notification_action.dart';
 import '../core/notification_payload.dart';
+import '../core/user_agent.dart';
 import '../interop/interop.dart' as interop;
 import '../utils/utils.dart';
 import '../const/sw_events.dart';
@@ -34,6 +36,11 @@ class ServiceWorkerManager {
 
   StreamSubscription<html.Event>? _serviceWorkerErrorSubscription;
   StreamSubscription<html.MessageEvent>? _serviceWorkerMessageStreamSubscription;
+
+  static const int platformLimitMac = 2;
+  static const int platformLimitLinux = 2;
+  static const int platformLimitWin = 3;
+  static const int platformLimitDefault = 3;
 
   // set the active service worker, detach events from current and attach new event handlers
   void _updateServiceWorker(html.ServiceWorker? value) {
@@ -213,12 +220,51 @@ class ServiceWorkerManager {
     interop.JSNotification notification, {
     Map<String, dynamic>? data,
   }) {
+    _checkActionCountLimitation(notification);
     final payload = ServiceWorkerPayload(
       NotificationAction.notification,
       notification: notification,
       data: data,
     );
     return postMessage(payload);
+  }
+
+  void _checkActionCountLimitation(interop.JSNotification notification) {
+    final actions = notification.options?.actions ?? [];
+    if(actions.isEmpty) {
+      return;
+    }
+
+    if(!kIsWeb) {
+        return;
+    }
+
+    switch(platformFromUserAgent) {
+      case Platform.macos:
+        if(actions.length > platformLimitMac) {
+          final ignoredActions = actions.sublist(platformLimitMac).map((e) => "'${e.action}'").join(", ");
+          printDebug("macOS Notification centre only supports up to 3 actions, ignored the following actions: [$ignoredActions]");
+        }
+        break;
+      case Platform.linux:
+        if(actions.length > platformLimitLinux) {
+          final ignoredActions = actions.sublist(platformLimitLinux).map((e) => "'${e.action}'").join(", ");
+          printDebug("Linux platforms usually supports up to 3 actions, ignored the following actions: [$ignoredActions]");
+        }
+        break;
+      case Platform.windows:
+        if(actions.length > platformLimitWin) {
+          final ignoredActions = actions.sublist(platformLimitWin).map((e) => "'${e.action}'").join(", ");
+          printDebug("Windows 10 Toast Notification only supports up to 3 actions, ignored the following actions: [$ignoredActions]");
+        }
+      case Platform.unknown:
+      default:
+        if(actions.length > platformLimitDefault) {
+          final ignoredActions = actions.sublist(platformLimitDefault).map((e) => "'${e.action}'").join(", ");
+          printDebug("Could not determine the platform from user agent, most platforms ignore actions beyond 3, ignored the following actions may be ignored: [$ignoredActions]");
+        }
+        return;
+    }
   }
 
   Future<void> postAction({
