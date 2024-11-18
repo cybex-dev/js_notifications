@@ -14,6 +14,8 @@ import 'package:web/web.dart' as web;
 import 'core/core.dart';
 import 'platform_interface/js_notifications_platform_interface.dart';
 
+export 'interop/interop.dart' show JSNotification, JSNotificationOptions, JSNotificationAction, JSNotificationDirection;
+
 /// A web implementation of the JsNotificationsPlatform of the JsNotifications plugin.
 class JsNotificationsWeb extends JsNotificationsPlatform {
   late final ServiceWorkerManager serviceWorkerManager;
