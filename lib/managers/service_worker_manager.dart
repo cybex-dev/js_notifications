@@ -5,8 +5,6 @@ import 'package:flutter/foundation.dart';
 import 'package:js_notifications/core/core.dart';
 
 import '../const/const.dart';
-import '../core/notification_action.dart';
-import '../core/notification_payload.dart';
 import '../core/user_agent.dart';
 import '../interop/interop.dart' as interop;
 import '../utils/utils.dart';
@@ -15,7 +13,7 @@ import '../const/sw_events.dart';
 typedef Consumer<T> = void Function(T t);
 
 class ServiceWorkerManager {
-  static const String TAG = 'service_worker_manager';
+  static const String tag = 'service_worker_manager';
 
   late final interop.NotificationsAPI _notificationApi;
 
@@ -63,7 +61,7 @@ class ServiceWorkerManager {
     printDebug("Setting up service worker");
     _webServiceWorkerContainerDelegate = html.window.navigator.serviceWorker;
     if (_webServiceWorkerContainerDelegate == null) {
-      printDebug("No service worker found.", TAG);
+      printDebug("No service worker found.", tag);
       return;
     }
 
@@ -78,7 +76,7 @@ class ServiceWorkerManager {
     printDebug("Registering service worker at '/$jsNotificationsSwJs'.");
     final registration = await delegate.register("/$jsNotificationsSwJs", options).catchError((e) {
       printDebug(e);
-      printDebug("Failed to register $jsNotificationsSwJs, please make sure you copied over $jsNotificationsSwJs into your project\'s web folder e.g. root_project/web/$jsNotificationsSwJs");
+      printDebug("Failed to register $jsNotificationsSwJs, please make sure you copied over $jsNotificationsSwJs into your project's web folder e.g. root_project/web/$jsNotificationsSwJs");
       throw e;
     });
 
@@ -136,33 +134,33 @@ class ServiceWorkerManager {
 
   /// Service Worker Container event listeners
   void _onServiceWorkerContainerControllerChange(html.Event event) {
-    printDebug("Service worker container controller changed: $event", TAG);
+    printDebug("Service worker container controller changed: $event", tag);
     _updateServiceWorker(_webServiceWorkerContainerDelegate?.controller);
   }
 
   void _onServiceWorkerContainerStateChange(html.Event event) {
-    printDebug("Service worker container state change: $event", TAG);
+    printDebug("Service worker container state change: $event", tag);
   }
 
   void _onServiceWorkerContainerError(html.Event event) {
-    printDebug("Service worker container error: $event", TAG);
+    printDebug("Service worker container error: $event", tag);
   }
 
   void _onServiceWorkerContainerInstall(html.Event event) {
-    printDebug("Service worker container install: $event", TAG);
+    printDebug("Service worker container install: $event", tag);
   }
 
   void _onServiceWorkerContainerActivate(html.Event event) {
-    printDebug("Service worker container activate: $event", TAG);
+    printDebug("Service worker container activate: $event", tag);
     _updateServiceWorker(_webServiceWorkerContainerDelegate?.controller);
   }
 
   void _onServiceWorkerContainerFetch(html.Event event) {
-    printDebug("Service worker container fetch: $event", TAG);
+    printDebug("Service worker container fetch: $event", tag);
   }
 
   void _onServiceWorkerContainerMessageEvent(html.MessageEvent event) {
-    printDebug("Service worker container message event: $event", TAG);
+    printDebug("Service worker container message event: $event", tag);
     final map = Map<String, dynamic>.from(event.data);
     final action = NotificationActionResult.fromJson(map);
     final type = map["type"];
@@ -177,43 +175,43 @@ class ServiceWorkerManager {
 
   /// Service Worker event listeners
   void _onServiceWorkerMessage(html.Event event) {
-    printDebug("Service worker message: $event", TAG);
+    printDebug("Service worker message: $event", tag);
   }
 
   void _onServiceWorkerStateChange(html.Event event) {
-    printDebug("Service worker state change: ${_serviceWorker?.state}", TAG);
+    printDebug("Service worker state change: ${_serviceWorker?.state}", tag);
   }
 
   void _onServiceWorkerError(html.Event event) {
-    printDebug("Service worker error: $event", TAG);
+    printDebug("Service worker error: $event", tag);
   }
 
   void _onServiceWorkerErrorEvent(html.Event event) {
-    printDebug("Service worker error event: $event", TAG);
+    printDebug("Service worker error event: $event", tag);
   }
 
   void _onServiceWorkerInstall(html.Event event) {
-    printDebug("Service worker install: $event", TAG);
+    printDebug("Service worker install: $event", tag);
   }
 
   void _onServiceWorkerActivate(html.Event event) {
-    printDebug("Service worker activate: $event", TAG);
+    printDebug("Service worker activate: $event", tag);
   }
 
   void _onServiceWorkerFetch(html.Event event) {
-    printDebug("Service worker fetch: $event", TAG);
+    printDebug("Service worker fetch: $event", tag);
   }
 
   void _onServiceWorkerPush(html.Event event) {
-    printDebug("Service worker state change: $event", TAG);
+    printDebug("Service worker state change: $event", tag);
   }
 
   void _onServiceWorkerPushSubscriptionChange(html.Event event) {
-    printDebug("Service worker push subscription change: $event", TAG);
+    printDebug("Service worker push subscription change: $event", tag);
   }
 
   void _onServiceWorkerSync(html.Event event) {
-    printDebug("Service worker sync: $event", TAG);
+    printDebug("Service worker sync: $event", tag);
   }
 
   Future<void> postNotification(

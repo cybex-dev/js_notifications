@@ -10,7 +10,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:js_notifications/js_notifications_web.dart';
 import 'package:js_notifications/platform_interface/js_notifications_platform_interface.dart';
 
 void main() {

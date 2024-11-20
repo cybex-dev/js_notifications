@@ -49,4 +49,7 @@ class NotificationActionResult implements Serializable {
           tag == other.tag &&
           action == other.action &&
           data == other.data;
+
+  @override
+  int get hashCode => tag.hashCode ^ action.hashCode ^ data.hashCode;
 }

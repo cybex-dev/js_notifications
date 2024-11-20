@@ -3,7 +3,7 @@ import 'dart:html';
 import 'package:js_notifications/utils/utils.dart';
 
 class NotificationsAPI {
-  static const String TAG = 'notifications_api';
+  static const tag = 'notifications_api';
 
   NotificationsAPI._();
 
@@ -16,13 +16,13 @@ class NotificationsAPI {
   Future<bool> requestPermission() async {
     try {
       if(!isSupported) {
-        printDebug("Notifications not supported", TAG);
+        printDebug("Notifications not supported", tag);
         return false;
       }
       final perm = await Notification.requestPermission();
       return (perm == "granted");
     } catch (e) {
-      printDebug("Failed to request notifications permission", TAG);
+      printDebug("Failed to request notifications permission", tag);
       printDebug(e);
       return false;
     }
@@ -33,7 +33,7 @@ class NotificationsAPI {
       final perm = Notification.permission;
       return (perm == "granted");
     } catch (e) {
-      printDebug("Failed to query notifications permission", TAG);
+      printDebug("Failed to query notifications permission", tag);
       printDebug(e);
       return false;
     }
