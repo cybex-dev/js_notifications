@@ -22,7 +22,7 @@ jobs:
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version-file: example/pubspec.yaml
+          flutter-version: '3.22.0'
           channel: 'stable'
           cache: true
 
@@ -47,7 +47,7 @@ jobs:
       - name: Setup Flutter build environment
         uses: subosito/flutter-action@v2
         with:
-          flutter-version-file: example/pubspec.yaml
+          flutter-version: '3.22.0'
           channel: 'stable'
           cache: true
 
