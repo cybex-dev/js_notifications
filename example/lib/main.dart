@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+//ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 
-import 'package:flutter/services.dart';
 import 'package:js_notifications/interop/interop.dart';
 import 'package:js_notifications/js_notifications_web.dart';
 import 'package:js_notifications/platform_interface/js_notifications_platform_interface.dart';
+import 'package:js_notifications/utils/utils.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
 
 void main() {
@@ -23,7 +24,7 @@ class _MyAppState extends State<MyApp> {
   final _jsNotificationsPlugin = JsNotificationsPlatform.instance;
   final stopWatchTimer = StopWatchTimer();
   StreamSubscription<int>? _stopWatchTimerListener;
-  final _boldTextStyle = TextStyle(fontWeight: FontWeight.bold);
+  final _boldTextStyle = const TextStyle(fontWeight: FontWeight.bold);
   bool _stopwatchSilent = false;
 
   static const _notificationTagStopwatch = "stopwatch";
@@ -130,7 +131,7 @@ class _MyAppState extends State<MyApp> {
 
   void _onSecondTimerTick() {
     final formattedCallTime = StopWatchTimer.getDisplayTime(stopWatchTimer.rawTime.value, milliSecond: false);
-    print("Timer: $formattedCallTime");
+    printDebug("Timer: $formattedCallTime");
     _jsNotificationsPlugin.showNotification(
       "Timer",
       body: formattedCallTime,
@@ -141,16 +142,16 @@ class _MyAppState extends State<MyApp> {
       silent: _stopwatchSilent,
       actions: [
         if (stopWatchTimer.isRunning) ...[
-          JSNotificationAction(action: _notificationActionStopwatchPause, title: "Pause"),
-          JSNotificationAction(action: _notificationActionStopwatchStop, title: "Stop"),
+          const JSNotificationAction(action: _notificationActionStopwatchPause, title: "Pause"),
+          const JSNotificationAction(action: _notificationActionStopwatchStop, title: "Stop"),
         ] else ...[
-          JSNotificationAction(action: _notificationActionStopwatchStart, title: "Start"),
-          JSNotificationAction(action: _notificationActionDismiss, title: "Dismiss"),
+          const JSNotificationAction(action: _notificationActionStopwatchStart, title: "Start"),
+          const JSNotificationAction(action: _notificationActionDismiss, title: "Dismiss"),
         ],
         if (_stopwatchSilent)
-          JSNotificationAction(action: _notificationActionStopwatchHeadsUp, title: "Heads Up")
+          const JSNotificationAction(action: _notificationActionStopwatchHeadsUp, title: "Heads Up")
         else
-          JSNotificationAction(action: _notificationActionStopwatchSilent, title: "Silence"),
+          const JSNotificationAction(action: _notificationActionStopwatchSilent, title: "Silence"),
       ],
     );
   }
@@ -168,7 +169,7 @@ class _MyAppState extends State<MyApp> {
             Column(
               children: [
                 Text("Test Notification", style: _boldTextStyle),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -176,29 +177,29 @@ class _MyAppState extends State<MyApp> {
                       onPressed: () {
                         _sendBasicNotification("Test Notification", tag: "test");
                       },
-                      child: Text("Test Notification"),
+                      child: const Text("Test Notification"),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     ElevatedButton(
                       onPressed: () {
                         _dismissBasicNotification();
                       },
-                      child: Text("Dismiss Test Notification"),
+                      child: const Text("Dismiss Test Notification"),
                     ),
                   ],
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 Text("Data Notification", style: _boldTextStyle),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 ElevatedButton(
                   onPressed: () {
                     _sendDataNotification();
                   },
-                  child: Text("Data Notification"),
+                  child: const Text("Data Notification"),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 Text("Custom Notifications", style: _boldTextStyle),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -206,25 +207,25 @@ class _MyAppState extends State<MyApp> {
                       onPressed: () {
                         _sendSpanishInquisition();
                       },
-                      child: Text("Expect the unexpected."),
+                      child: const Text("Expect the unexpected."),
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     ElevatedButton(
                       onPressed: () {
                         _sendGrievous();
                       },
-                      child: Text("Star Wars"),
+                      child: const Text("Star Wars"),
                     ),
                   ],
                 ),
               ],
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Column(
               children: [
                 // Control timer notification
                 Text("Timer Notification", style: _boldTextStyle),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -232,27 +233,27 @@ class _MyAppState extends State<MyApp> {
                       onPressed: () {
                         _startTimerNotification();
                       },
-                      child: Icon(Icons.play_arrow),
+                      child: const Icon(Icons.play_arrow),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
                         _pauseTimerNotification();
                       },
-                      child: Icon(Icons.pause),
+                      child: const Icon(Icons.pause),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
                         _stopTimerNotification();
                       },
-                      child: Icon(Icons.stop),
+                      child: const Icon(Icons.stop),
                     )
                   ],
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -260,23 +261,23 @@ class _MyAppState extends State<MyApp> {
                   onPressed: () {
                     _showTimerNotification();
                   },
-                  child: Text("Show Timer Notification"),
+                  child: const Text("Show Timer Notification"),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: () {
                     _hideTimerNotification();
                   },
-                  child: Text("Hide Timer Notification"),
+                  child: const Text("Hide Timer Notification"),
                 ),
               ],
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
                 _clearAllNotifications();
               },
-              child: Text("Clear All"),
+              child: const Text("Clear All"),
             ),
           ],
         ),
@@ -285,10 +286,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _sendDataNotification({String? id, String? title, String? body, Map<String, dynamic>? data}) {
-    final _id = id ?? "data-notification";
-    final _title = title ?? "Data Notification";
-    final _body = body ?? "A notification with some data too";
-    final _data = {
+    final id0 = id ?? "data-notification";
+    final title0 = title ?? "Data Notification";
+    final body0 = body ?? "A notification with some data too";
+    final data0 = {
       "string": "string",
       "1": 1,
       "false": false,
@@ -296,9 +297,10 @@ class _MyAppState extends State<MyApp> {
       'c': 'c',
       '[]': [],
       '{}': {},
+      if(data != null) ...data,
     };
 
-    return _jsNotificationsPlugin.showNotification(_title, body: _body, data: _data, tag: _id);
+    return _jsNotificationsPlugin.showNotification(title0, body: body0, data: data0, tag: id0);
   }
 
   Future<void> _sendBasicNotification(String title, {String? tag}) {
@@ -316,8 +318,8 @@ class _MyAppState extends State<MyApp> {
       tag: "inquisition",
       icon: "https://pbs.twimg.com/media/CtCG_f4WcAAJY-1.jpg",
       actions: [
-        JSNotificationAction(action: "dismiss", title: "Whatever"),
-        JSNotificationAction(action: "unexpected", title: "Didn't expect that"),
+        const JSNotificationAction(action: "dismiss", title: "Whatever"),
+        const JSNotificationAction(action: "unexpected", title: "Didn't expect that"),
       ],
       requireInteraction: true,
     );
@@ -331,8 +333,8 @@ class _MyAppState extends State<MyApp> {
       icon:
           "https://www.liveabout.com/thmb/F5lfgFptU9DNTDCT-xNEtot0lQ0=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/EP2-IA-60435_R_8x10-56a83bea3df78cf7729d314a.jpg",
       actions: [
-        JSNotificationAction(action: "general_kenobi", title: "General Kenobi"),
-        JSNotificationAction(action: "confused", title: "I'm confused"),
+        const JSNotificationAction(action: "general_kenobi", title: "General Kenobi"),
+        const JSNotificationAction(action: "confused", title: "I'm confused"),
       ],
       requireInteraction: true,
     );
@@ -345,8 +347,8 @@ class _MyAppState extends State<MyApp> {
       body: "You acknowledge he is a bold one. What do you do?",
       icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQvS2A_Sb7z7dXcrPVscT0FeCdFO7IM88U2vg&s",
       actions: [
-        JSNotificationAction(action: "kill_him", title: "Kill Him"),
-        JSNotificationAction(action: "watch_star_wars", title: "Watch Star Wars"),
+        const JSNotificationAction(action: "kill_him", title: "Kill Him"),
+        const JSNotificationAction(action: "watch_star_wars", title: "Watch Star Wars"),
       ],
       requireInteraction: true,
     );
@@ -365,8 +367,8 @@ class _MyAppState extends State<MyApp> {
       "Timer",
       tag: _notificationTagStopwatch,
       actions: [
-        JSNotificationAction(title: "Start", action: "stopwatch_start"),
-        JSNotificationAction(title: "Dismiss", action: "dismiss"),
+        const JSNotificationAction(title: "Start", action: "stopwatch_start"),
+        const JSNotificationAction(title: "Dismiss", action: "dismiss"),
       ],
       requireInteraction: true,
     );
