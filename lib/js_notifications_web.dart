@@ -23,6 +23,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   StreamController<NotificationActionResult>? _dismissStream;
   StreamController<NotificationActionResult>? _actionStream;
+  StreamController<NotificationActionResult>? _tapStream;
 
   static String _scopeUrl = defaultScope;
 
@@ -37,9 +38,14 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   void _setup() {
     serviceWorkerManager = ServiceWorkerManager(
+        onNotificationTap: _onNotificationTap,
         onNotificationAction: _onNotificationAction,
         onNotificationDismiss: (t) => _onNotificationDismiss,
         scopeUrl: _scopeUrl);
+  }
+
+  void _onNotificationTap(NotificationActionResult e) {
+    _tapStream?.add(e);
   }
 
   void _onNotificationAction(NotificationActionResult e) {
@@ -145,5 +151,11 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   Stream<NotificationActionResult> get dismissStream {
     _dismissStream ??= StreamController<NotificationActionResult>.broadcast();
     return _dismissStream!.stream;
+  }
+
+  @override
+  Stream<NotificationActionResult> get tapStream {
+    _tapStream ??= StreamController<NotificationActionResult>.broadcast();
+    return _tapStream!.stream;
   }
 }
