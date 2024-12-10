@@ -83,4 +83,7 @@ abstract class JsNotificationsPlatform extends PlatformInterface {
 
   /// Stream broadcasting notification close events with associated data
   Stream<NotificationActionResult> get dismissStream;
+
+  /// Stream broadcasting notification tap events with associated data
+  Stream<NotificationActionResult> get tapStream;
 }

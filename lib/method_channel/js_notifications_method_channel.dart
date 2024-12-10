@@ -69,6 +69,9 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   Stream<NotificationActionResult> get dismissStream => throw UnimplementedError();
 
   @override
+  Stream<NotificationActionResult> get tapStream => throw UnimplementedError();
+
+  @override
   set scopeUrl(String value) {
     // TODO: implement scopeUrl
   }

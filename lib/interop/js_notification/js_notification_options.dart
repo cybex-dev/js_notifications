@@ -68,6 +68,59 @@ class JSNotificationOptions implements Serializable {
     this.vibrate,
   });
 
+  JSNotificationOptions copyWithSelf({JSNotificationOptions? options}) {
+    return JSNotificationOptions(
+      actions: options?.actions ?? actions,
+      badge: options?.badge ?? badge,
+      body: options?.body ?? body,
+      data: options?.data ?? data,
+      dir: options?.dir ?? dir,
+      icon: options?.icon ?? icon,
+      image: options?.image ?? image,
+      lang: options?.lang ?? lang,
+      renotify: options?.renotify ?? renotify,
+      requireInteraction: options?.requireInteraction ?? requireInteraction,
+      silent: options?.silent ?? silent,
+      tag: options?.tag ?? tag,
+      timestamp: options?.timestamp ?? timestamp,
+      vibrate: options?.vibrate ?? vibrate,
+    );
+  }
+
+  JSNotificationOptions copyWith({
+    List<JSNotificationAction>? actions,
+    int? badge,
+    String? body,
+    Map<String, dynamic>? data,
+    JSNotificationDirection? dir,
+    String? icon,
+    String? image,
+    String? lang,
+    bool? renotify,
+    bool? requireInteraction,
+    bool? silent,
+    String? tag,
+    int? timestamp,
+    VibratePattern? vibrate,
+  }) {
+    return JSNotificationOptions(
+      actions: actions ?? this.actions,
+      badge: badge ?? this.badge,
+      body: body ?? this.body,
+      data: data ?? this.data,
+      dir: dir ?? this.dir,
+      icon: icon ?? this.icon,
+      image: image ?? this.image,
+      lang: lang ?? this.lang,
+      renotify: renotify ?? this.renotify,
+      requireInteraction: requireInteraction ?? this.requireInteraction,
+      silent: silent ?? this.silent,
+      tag: tag ?? this.tag,
+      timestamp: timestamp ?? this.timestamp,
+      vibrate: vibrate ?? this.vibrate,
+    );
+  }
+
   @override
   Map<String, dynamic> toMap() {
     final Map<String, dynamic> map = {};

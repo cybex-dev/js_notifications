@@ -19,7 +19,7 @@ class ServiceWorkerManager {
 
   late final String _scope;
 
-  ServiceWorkerManager({this.onNotificationAction, this.onNotificationDismiss, required String scopeUrl}){
+  ServiceWorkerManager({this.onNotificationTap, this.onNotificationAction, this.onNotificationDismiss, required String scopeUrl}){
     _scope = scopeUrl;
     _notificationApi = interop.NotificationsAPI.instance;
     _setupServiceWorker();
@@ -27,6 +27,7 @@ class ServiceWorkerManager {
 
   Consumer<NotificationActionResult>? onNotificationAction;
   Consumer<NotificationActionResult>? onNotificationDismiss;
+  Consumer<NotificationActionResult>? onNotificationTap;
 
   html.ServiceWorkerContainer? _webServiceWorkerContainerDelegate;
 
@@ -162,12 +163,30 @@ class ServiceWorkerManager {
   void _onServiceWorkerContainerMessageEvent(html.MessageEvent event) {
     printDebug("Service worker container message event: $event", tag);
     final map = Map<String, dynamic>.from(event.data);
-    final action = NotificationActionResult.fromJson(map);
+    final result = NotificationActionResult.fromJson(map);
     final type = map["type"];
     if(type == SWEvents.click) {
-      onNotificationAction?.call(action);
+      /// Custom notification event, not part of the standard Notification API.
+      /// Used to describe clicking on a notification.
+      /// This may be confused with an empty notification action event.
+      /// Sample:
+      /// ```js
+      /// notification.actions = [
+      ///    { action: "", title: "Open Window" },
+      ///    { action: "click", title: "Clicked me" },
+      /// ];
+      /// ```
+      ///
+      /// The above action with title "Open Window" will be considered a tap action as the service worker does not
+      /// distinguish between a normal notification click and a notification action with an empty action string
+      /// (see "Open Window" action above).
+      if(result.action == null || result.action!.isEmpty) {
+        onNotificationTap?.call(result);
+      } else {
+        onNotificationAction?.call(result);
+      }
     } else if (type == SWEvents.close) {
-      onNotificationDismiss?.call(action);
+      onNotificationDismiss?.call(result);
     } else {
       throw Exception("Unknown NotificationActionResult type $type");
     }

@@ -10,7 +10,21 @@ class JSNotification implements Serializable {
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification#options
   final JSNotificationOptions? options;
 
-  JSNotification(this.title, [this.options]);
+  const JSNotification(this.title, [this.options]);
+
+  JSNotification copyWithSelf(JSNotification other) {
+    return JSNotification(
+      other.title,
+      other.options,
+    );
+  }
+
+  JSNotification copyWith({String? title, JSNotificationOptions? options}) {
+    return JSNotification(
+      title ?? this.title,
+      options ?? this.options,
+    );
+  }
 
   @override
   Map<String, dynamic> toMap() {

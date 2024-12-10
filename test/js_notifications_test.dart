@@ -67,6 +67,10 @@ class MockJsNotificationsPlatform
   Stream<NotificationActionResult> get dismissStream => throw UnimplementedError();
 
   @override
+  // TODO: implement notificationTap
+  Stream<NotificationActionResult> get tapStream => throw UnimplementedError();
+
+  @override
   set scopeUrl(String value) {
     // TODO: implement scopeUrl
   }
