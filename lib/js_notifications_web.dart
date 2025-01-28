@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:js_notifications/const/const.dart';
 import 'package:js_notifications/interop/interop.dart' as interop;
 import 'package:js_notifications/managers/service_worker_manager.dart';
+import 'package:simple_print/simple_print.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web/web.dart' as web;
 
@@ -33,6 +34,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   /// Constructs a JsNotificationsWeb
   JsNotificationsWeb._() {
+    setAppTag("js_notifications");
     _setup();
     _startEventListeners();
   }
