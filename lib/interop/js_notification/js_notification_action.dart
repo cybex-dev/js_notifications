@@ -12,14 +12,17 @@ class JSNotificationAction implements Serializable {
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/actions#icon
   final String? icon;
 
-  const JSNotificationAction({required this.action, required this.title, this.icon});
+  const JSNotificationAction(
+      {required this.action, required this.title, this.icon});
 
-  factory JSNotificationAction.fromTitle(String title, {bool transformToLowerCase = true}) {
+  factory JSNotificationAction.fromTitle(String title,
+      {bool transformToLowerCase = true}) {
     final action = transformToLowerCase ? title.toLowerCase() : title;
     return JSNotificationAction(action: action, title: title);
   }
 
-  factory JSNotificationAction.fromAction(String action, {bool capitalize = true}) {
+  factory JSNotificationAction.fromAction(String action,
+      {bool capitalize = true}) {
     final title = capitalize ? action.capitalize() : action;
     return JSNotificationAction(action: action, title: title);
   }

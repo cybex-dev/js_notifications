@@ -9,15 +9,25 @@ import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:js_notifications/const/const.dart';
 import 'package:js_notifications/interop/interop.dart' as interop;
 import 'package:js_notifications/managers/service_worker_manager.dart';
+import 'package:simple_print/simple_print.dart';
+import 'package:uuid/uuid.dart';
 import 'package:web/web.dart' as web;
 
 import 'core/core.dart';
 import 'platform_interface/js_notifications_platform_interface.dart';
 
-export 'interop/interop.dart' show JSNotification, JSNotificationOptions, JSNotificationAction, JSNotificationDirection;
+export 'interop/interop.dart'
+    show
+        JSNotification,
+        JSNotificationOptions,
+        JSNotificationAction,
+        JSNotificationDirection;
 
 /// A web implementation of the JsNotificationsPlatform of the JsNotifications plugin.
 class JsNotificationsWeb extends JsNotificationsPlatform {
+  final Map<String, interop.JSNotification> _notifications = {};
+  late StreamSubscription<NotificationActionResult> _dismissSubscription;
+
   late final ServiceWorkerManager serviceWorkerManager;
   late final interop.NotificationsAPI notificationsAPI;
 
@@ -29,7 +39,9 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   /// Constructs a JsNotificationsWeb
   JsNotificationsWeb._() {
+    setAppTag("js_notifications");
     _setup();
+    _startEventListeners();
   }
 
   static void registerWith(Registrar registrar) {
@@ -38,10 +50,17 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   void _setup() {
     serviceWorkerManager = ServiceWorkerManager(
-        onNotificationTap: _onNotificationTap,
-        onNotificationAction: _onNotificationAction,
-        onNotificationDismiss: (t) => _onNotificationDismiss,
-        scopeUrl: _scopeUrl);
+      onNotificationTap: _onNotificationTap,
+      onNotificationAction: _onNotificationAction,
+      onNotificationDismiss: _onNotificationDismiss,
+      scopeUrl: _scopeUrl,
+    );
+  }
+
+  void _startEventListeners() {
+    _dismissSubscription = dismissStream.listen((event) {
+      _notifications.remove(event.tag);
+    });
   }
 
   void _onNotificationTap(NotificationActionResult e) {
@@ -63,16 +82,24 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   @override
   Future<void> addNotification(interop.JSNotification notification) {
+    final id = notification.options?.tag ?? const Uuid().v4();
+    _addNotification(id, notification);
     return serviceWorkerManager.postNotification(notification);
   }
 
   @override
   Future<void> clearNotifications() {
+    _notifications.clear();
     return serviceWorkerManager.cancelAllNotifications();
   }
 
+  /// Dismiss notification with ID
   @override
   Future<void> dismissNotification({required String id}) {
+    final notification = _notifications.remove(id);
+    if (notification == null) {
+      printDebug('Notification with id $id not found');
+    }
     return serviceWorkerManager.cancelNotification(id);
   }
 
@@ -157,5 +184,29 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   Stream<NotificationActionResult> get tapStream {
     _tapStream ??= StreamController<NotificationActionResult>.broadcast();
     return _tapStream!.stream;
+  }
+
+  @override
+  Future<List<String>> getNotificationTags() async {
+    return _notifications.keys.toList();
+  }
+
+  @override
+  Future<interop.JSNotification?> getNotification(String tag) async {
+    return _notifications[tag];
+  }
+
+  @override
+  Future<List<interop.JSNotification>> getAllNotifications() async {
+    return _notifications.values.toList();
+  }
+
+  void _addNotification(String id, interop.JSNotification notification) {
+    _notifications[id] = notification;
+  }
+
+  @override
+  Future<void> dispose() async {
+    await _dismissSubscription.cancel();
   }
 }

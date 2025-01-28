@@ -14,7 +14,8 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
 
   @override
   Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
+    final version =
+        await methodChannel.invokeMethod<String>('getPlatformVersion');
     return version;
   }
 
@@ -51,7 +52,21 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   }
 
   @override
-  Future<void> showNotification(String title, {List<interop.JSNotificationAction>? actions, int? badge, String? body, Map<String, dynamic>? data, interop.JSNotificationDirection? dir, String? icon, String? image, String? lang, bool? renotify, bool? requireInteraction, bool? silent, String? tag, int? timestamp, VibratePattern? vibrate}) {
+  Future<void> showNotification(String title,
+      {List<interop.JSNotificationAction>? actions,
+      int? badge,
+      String? body,
+      Map<String, dynamic>? data,
+      interop.JSNotificationDirection? dir,
+      String? icon,
+      String? image,
+      String? lang,
+      bool? renotify,
+      bool? requireInteraction,
+      bool? silent,
+      String? tag,
+      int? timestamp,
+      VibratePattern? vibrate}) {
     // TODO: implement showNotification
     throw UnimplementedError();
   }
@@ -63,10 +78,12 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   }
 
   @override
-  Stream<NotificationActionResult> get actionStream => throw UnimplementedError();
+  Stream<NotificationActionResult> get actionStream =>
+      throw UnimplementedError();
 
   @override
-  Stream<NotificationActionResult> get dismissStream => throw UnimplementedError();
+  Stream<NotificationActionResult> get dismissStream =>
+      throw UnimplementedError();
 
   @override
   Stream<NotificationActionResult> get tapStream => throw UnimplementedError();
@@ -74,5 +91,29 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   @override
   set scopeUrl(String value) {
     // TODO: implement scopeUrl
+  }
+
+  @override
+  Future<List<interop.JSNotification>> getAllNotifications() {
+    // TODO: implement getAllNotifications
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<interop.JSNotification?> getNotification(String tag) {
+    // TODO: implement getNotification
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<String>> getNotificationTags() {
+    // TODO: implement getNotificationTags
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> dispose() {
+    // TODO: implement dispose
+    throw UnimplementedError();
   }
 }

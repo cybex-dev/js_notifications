@@ -1,3 +1,4 @@
 enum JSNotificationDirection {
-  ltr, rtl;
+  ltr,
+  rtl;
 }

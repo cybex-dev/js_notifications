@@ -12,13 +12,13 @@ class NotificationActionResult implements Serializable {
     String? action;
     Map<String, dynamic>? data;
 
-    if(json.containsKey("tag") && json["tag"] is String) {
+    if (json.containsKey("tag") && json["tag"] is String) {
       tag = json["tag"];
     }
-    if(json.containsKey("action") && json["action"] is String) {
+    if (json.containsKey("action") && json["action"] is String) {
       action = json["action"];
     }
-    if(json.containsKey("data") && json["data"] is Map) {
+    if (json.containsKey("data") && json["data"] is Map) {
       final map = Map<String, dynamic>.from(json["data"]);
       data = map;
     }
@@ -29,13 +29,13 @@ class NotificationActionResult implements Serializable {
   @override
   Map<String, dynamic> toMap() {
     Map<String, dynamic> map = {};
-    if(action != null) {
+    if (action != null) {
       map["action"] = action;
     }
-    if(data != null) {
+    if (data != null) {
       map["data"] = data;
     }
-    if(tag != null) {
+    if (tag != null) {
       map["tag"] = tag;
     }
     return map;

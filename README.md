@@ -66,7 +66,7 @@ The Dart Web package is limited in showing notifications, one can only show a ti
 Add the following to your `pubspec.yaml` file:
 ```yaml
 dependencies:
-  js_notifications: ^0.0.1
+  js_notifications: ^0.0.3
 ```
 
 ### Copy service worker
@@ -109,6 +109,10 @@ _jsNotificationsPlugin.showNotification('Title', {
   }
 );
 ```
+
+_Note: the tag is used to identify the notification, if a notification with the same tag is shown, the previous notification is replaced.
+
+For convenient notification access, provide a tag or one will be generated via the [uuid](https://pub.dev/packages/uuid) package, specifically `uuid.v4()`._
 
 ### Creating a notification with actions
 
@@ -167,3 +171,24 @@ _jsNotificationsPlugin.dismissStream.listen((event) {
     print(event);
 });
 ```
+
+
+### Get a list of all notifications
+```dart
+_jsNotificationsPlugin.getAllNotifications().then((notifications) {
+    notifications.forEach((notification) {
+      print(notification);
+    });
+});
+```
+
+### Get a specific notification
+```dart
+_jsNotificationsPlugin.getNotification('my-awesome-notification-tag-here').then((notification) {
+    print(notification);
+});
+```
+
+## Features and bugs
+
+Any and all feedback, PRs are welcome.
