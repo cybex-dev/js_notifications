@@ -45,7 +45,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
     serviceWorkerManager = ServiceWorkerManager(
         onNotificationTap: _onNotificationTap,
         onNotificationAction: _onNotificationAction,
-        onNotificationDismiss: (t) => _onNotificationDismiss,
+      onNotificationDismiss: _onNotificationDismiss,
         scopeUrl: _scopeUrl);
 
   void _startEventListeners() {
