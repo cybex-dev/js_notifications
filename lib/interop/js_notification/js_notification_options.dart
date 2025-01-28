@@ -8,7 +8,6 @@ import 'js_notification_action.dart';
 ///
 /// See: https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification#options
 class JSNotificationOptions implements Serializable {
-
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/actions
   final List<JSNotificationAction>? actions;
 

@@ -10,7 +10,6 @@ import 'package:web/src/dom/vibration.dart';
 class MockJsNotificationsPlatform
     with MockPlatformInterfaceMixin
     implements JsNotificationsPlatform {
-
   @override
   Future<String?> getPlatformVersion() => Future.value('42');
 
@@ -33,7 +32,21 @@ class MockJsNotificationsPlatform
   }
 
   @override
-  Future<void> showNotification(String title, {List<JSNotificationAction>? actions, int? badge, String? body, Map<String, dynamic>? data, JSNotificationDirection? dir, String? icon, String? image, String? lang, bool? renotify, bool? requireInteraction, bool? silent, String? tag, int? timestamp, VibratePattern? vibrate}) {
+  Future<void> showNotification(String title,
+      {List<JSNotificationAction>? actions,
+      int? badge,
+      String? body,
+      Map<String, dynamic>? data,
+      JSNotificationDirection? dir,
+      String? icon,
+      String? image,
+      String? lang,
+      bool? renotify,
+      bool? requireInteraction,
+      bool? silent,
+      String? tag,
+      int? timestamp,
+      VibratePattern? vibrate}) {
     // TODO: implement showNotification
     throw UnimplementedError();
   }
@@ -60,11 +73,13 @@ class MockJsNotificationsPlatform
 
   @override
   // TODO: implement notificationClick
-  Stream<NotificationActionResult> get actionStream => throw UnimplementedError();
+  Stream<NotificationActionResult> get actionStream =>
+      throw UnimplementedError();
 
   @override
   // TODO: implement notificationClose
-  Stream<NotificationActionResult> get dismissStream => throw UnimplementedError();
+  Stream<NotificationActionResult> get dismissStream =>
+      throw UnimplementedError();
 
   @override
   // TODO: implement notificationTap
@@ -77,14 +92,16 @@ class MockJsNotificationsPlatform
 }
 
 void main() {
-  final JsNotificationsPlatform initialPlatform = JsNotificationsPlatform.instance;
+  final JsNotificationsPlatform initialPlatform =
+      JsNotificationsPlatform.instance;
 
   test('$MethodChannelJsNotifications is the default instance', () {
     expect(initialPlatform, isInstanceOf<MethodChannelJsNotifications>());
   });
 
   test('getPlatformVersion', () async {
-    JsNotificationsPlatform jsNotificationsPlugin = JsNotificationsPlatform.instance;
+    JsNotificationsPlatform jsNotificationsPlugin =
+        JsNotificationsPlatform.instance;
     MockJsNotificationsPlatform fakePlatform = MockJsNotificationsPlatform();
     JsNotificationsPlatform.instance = fakePlatform;
 

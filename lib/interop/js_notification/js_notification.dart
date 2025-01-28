@@ -3,7 +3,6 @@ import 'js_notification_options.dart';
 
 /// Wrapper object for Notification sent to Service Worker
 class JSNotification implements Serializable {
-
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/title
   final String title;
 
