@@ -9,6 +9,7 @@ import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:js_notifications/const/const.dart';
 import 'package:js_notifications/interop/interop.dart' as interop;
 import 'package:js_notifications/managers/service_worker_manager.dart';
+import 'package:uuid/uuid.dart';
 import 'package:web/web.dart' as web;
 
 import 'core/core.dart';
@@ -18,6 +19,9 @@ export 'interop/interop.dart' show JSNotification, JSNotificationOptions, JSNoti
 
 /// A web implementation of the JsNotificationsPlatform of the JsNotifications plugin.
 class JsNotificationsWeb extends JsNotificationsPlatform {
+  final Map<String, interop.JSNotification> _notifications = {};
+  late StreamSubscription<NotificationActionResult> _dismissSubscription;
+
   late final ServiceWorkerManager serviceWorkerManager;
   late final interop.NotificationsAPI notificationsAPI;
 
@@ -30,6 +34,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   /// Constructs a JsNotificationsWeb
   JsNotificationsWeb._() {
     _setup();
+    _startEventListeners();
   }
 
   static void registerWith(Registrar registrar) {
@@ -42,6 +47,11 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
         onNotificationAction: _onNotificationAction,
         onNotificationDismiss: (t) => _onNotificationDismiss,
         scopeUrl: _scopeUrl);
+
+  void _startEventListeners() {
+    _dismissSubscription = dismissStream.listen((event) {
+      _notifications.remove(event.tag);
+    });
   }
 
   void _onNotificationTap(NotificationActionResult e) {
@@ -63,16 +73,24 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   @override
   Future<void> addNotification(interop.JSNotification notification) {
+    final id = notification.options?.tag ?? const Uuid().v4();
+    _addNotification(id, notification);
     return serviceWorkerManager.postNotification(notification);
   }
 
   @override
   Future<void> clearNotifications() {
+    _notifications.clear();
     return serviceWorkerManager.cancelAllNotifications();
   }
 
+  /// Dismiss notification with ID
   @override
   Future<void> dismissNotification({required String id}) {
+    final notification = _notifications.remove(id);
+    if (notification == null) {
+      printDebug('Notification with id $id not found');
+    }
     return serviceWorkerManager.cancelNotification(id);
   }
 
