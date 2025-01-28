@@ -158,4 +158,28 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
     _tapStream ??= StreamController<NotificationActionResult>.broadcast();
     return _tapStream!.stream;
   }
+
+  @override
+  Future<List<String>> getNotificationTags() async {
+    return _notifications.keys.toList();
+  }
+
+  @override
+  Future<interop.JSNotification?> getNotification(String tag) async {
+    return _notifications[tag];
+  }
+
+  @override
+  Future<List<interop.JSNotification>> getAllNotifications() async {
+    return _notifications.values.toList();
+  }
+
+  void _addNotification(String id, interop.JSNotification notification) {
+    _notifications[id] = notification;
+  }
+
+  @override
+  Future<void> dispose() async {
+    await _dismissSubscription.cancel();
+  }
 }

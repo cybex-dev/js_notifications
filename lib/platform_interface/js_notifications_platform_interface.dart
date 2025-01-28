@@ -78,6 +78,15 @@ abstract class JsNotificationsPlatform extends PlatformInterface {
   /// Send action to service worker
   Future<void> sendAction(Map<String, dynamic> data, {String? id});
 
+  /// Get all notification tags
+  Future<List<String>> getNotificationTags();
+
+  /// Get notification by tag
+  Future<interop.JSNotification?> getNotification(String tag);
+
+  /// Get all notifications
+  Future<List<interop.JSNotification>> getAllNotifications();
+
   /// Stream broadcasting notification click events with associated data & action
   Stream<NotificationActionResult> get actionStream;
 
@@ -86,4 +95,6 @@ abstract class JsNotificationsPlatform extends PlatformInterface {
 
   /// Stream broadcasting notification tap events with associated data
   Stream<NotificationActionResult> get tapStream;
+
+  Future<void> dispose();
 }

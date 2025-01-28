@@ -75,4 +75,28 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   set scopeUrl(String value) {
     // TODO: implement scopeUrl
   }
+
+  @override
+  Future<List<interop.JSNotification>> getAllNotifications() {
+    // TODO: implement getAllNotifications
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<interop.JSNotification?> getNotification(String tag) {
+    // TODO: implement getNotification
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<String>> getNotificationTags() {
+    // TODO: implement getNotificationTags
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> dispose() {
+    // TODO: implement dispose
+    throw UnimplementedError();
+  }
 }
