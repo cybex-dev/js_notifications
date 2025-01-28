@@ -15,7 +15,10 @@ class SWEvents {
   static const String activate = "activate";
   static const String fetch = "fetch";
 
-  // Notification action events
+  // Notification action events, see for more info: https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API/Using_the_Notifications_API#notification_events
+  /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API/Using_the_Notifications_API#click
   static const String click = "click";
+
+  /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notifications_API/Using_the_Notifications_API#close
   static const String close = "close";
 }
