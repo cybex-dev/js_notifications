@@ -323,7 +323,7 @@ class ServiceWorkerManager {
               "Windows 10 Toast Notification only supports up to 3 actions, ignored the following actions: [$ignoredActions]");
         }
       case Platform.unknown:
-      // default:
+        // default:
         if (actions.length > platformLimitDefault) {
           final ignoredActions = actions
               .sublist(platformLimitDefault)
