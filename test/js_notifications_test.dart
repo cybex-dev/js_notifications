@@ -89,6 +89,30 @@ class MockJsNotificationsPlatform
   set scopeUrl(String value) {
     // TODO: implement scopeUrl
   }
+
+  @override
+  Future<void> dispose() {
+    // TODO: implement dispose
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<JSNotification>> getAllNotifications() {
+    // TODO: implement getAllNotifications
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<JSNotification?> getNotification(String tag) {
+    // TODO: implement getNotification
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<String>> getNotificationTags() {
+    // TODO: implement getNotificationTags
+    throw UnimplementedError();
+  }
 }
 
 void main() {
