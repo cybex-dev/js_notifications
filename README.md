@@ -15,15 +15,15 @@ JsNotificationsPlatform.instance.showNotification("Test Notification", tag: "tes
 
 ### macOS
 
-![](images/macos_simple_notification.png)
+![](https://raw.githubusercontent.com/cybex-dev/js_notifications/refs/heads/master/images/macos_simple_notification.png)
 
 ### Windows
 
-![](images/windows_simple_notification.png)
+![](https://raw.githubusercontent.com/cybex-dev/js_notifications/refs/heads/master/images/windows_simple_notification.png)
 
 ### Linux
 
-![Coming soon](images/linux_simple_notification.png)
+![Coming soon](https://raw.githubusercontent.com/cybex-dev/js_notifications/refs/heads/master/images/linux_simple_notification.png)
 
 ### Notification with action
 
@@ -47,15 +47,15 @@ JsNotificationsPlatform.instance.showNotification(
 
 Note: when hovering over the notification to display actions, the image is not displayed.
 
-![](images/macos_unexpected_notification.png)
+![](https://raw.githubusercontent.com/cybex-dev/js_notifications/refs/heads/master/images/macos_unexpected_notification.png)
 
 ### Windows
 
-![](images/windows_unexpected_notification.png)
+![](https://raw.githubusercontent.com/cybex-dev/js_notifications/refs/heads/master/images/windows_unexpected_notification.png)
 
 ### Linux
 
-![Coming soon](images/linux_unexpected_notification.png)
+![Coming soon](https://raw.githubusercontent.com/cybex-dev/js_notifications/refs/heads/master/images/linux_unexpected_notification.png)
 
 ## Inspiration
 The Dart Web package is limited in showing notifications, one can only show a title, body, and icon. This package extends the NotificationsAPI to allow for more customization.
@@ -93,7 +93,7 @@ _jsNotificationsPlugin.requestPermission().then((permission) {
 });
 ```
 
-![](images/chrome_permissions.png)
+![](https://raw.githubusercontent.com/cybex-dev/js_notifications/refs/heads/master/images/chrome_permissions.png)
 
 ### Creating a notification
 ```dart
