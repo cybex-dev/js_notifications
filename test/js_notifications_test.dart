@@ -128,8 +128,7 @@ void main() {
   test('getPlatformVersion', () async {
     JsNotificationsPlatform jsNotificationsPlugin =
         JsNotificationsPlatform.instance;
-    MockJsNotificationsPlatform fakePlatform = MockJsNotificationsPlatform();
-    JsNotificationsPlatform.instance = fakePlatform;
+    JsNotificationsPlatform.instance = JsNotificationsWeb.protected();
 
     expect(await jsNotificationsPlugin.getPlatformVersion(), '42');
   });
