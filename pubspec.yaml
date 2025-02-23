@@ -2,6 +2,13 @@ name: js_notifications
 description: "An extended NotificationsAPI for Dart managing web notifications."
 version: 0.0.3+3
 homepage: https://github.com/cybex-dev/js_notifications
+platforms:
+  web:
+topics:
+  - notifications
+  - web
+  - web-notifications
+  - notifications-api
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
