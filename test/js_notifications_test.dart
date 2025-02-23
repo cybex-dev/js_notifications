@@ -116,6 +116,8 @@ class MockJsNotificationsPlatform
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   final JsNotificationsPlatform initialPlatform =
       JsNotificationsPlatform.instance;
 
