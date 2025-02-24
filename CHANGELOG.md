@@ -1,3 +1,8 @@
+## 0.0.3+4
+
+* Fix `JsNotificationDirection`'s `toString()` conversion 
+* Added `auto` to `JSNotificationDirection`
+
 ## 0.0.3+3
 
 * Updated docs
