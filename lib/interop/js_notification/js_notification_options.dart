@@ -142,7 +142,7 @@ class JSNotificationOptions implements Serializable {
     }
 
     if (dir != null) {
-      map["dir"] = dir;
+      map["dir"] = dir?.name;
     }
 
     if (icon != null) {
