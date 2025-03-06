@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:js_notifications/core/notification_action_result.dart';
 import 'package:web/web.dart';
