@@ -44,7 +44,6 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
     _startEventListeners();
   }
 
-  @visibleForTesting
   factory JsNotificationsWeb.protected() => JsNotificationsWeb._();
 
   static void registerWith(Registrar registrar) {
