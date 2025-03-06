@@ -1,7 +1,14 @@
 name: js_notifications
-description: "An extended NotificationsAPI for Dart Web notifications."
-version: 0.0.3+2
+description: "An extended NotificationsAPI for Dart managing web notifications."
+version: 0.0.3+3
 homepage: https://github.com/cybex-dev/js_notifications
+platforms:
+  web:
+topics:
+  - notifications
+  - web
+  - web-notifications
+  - notifications-api
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -12,8 +19,8 @@ dependencies:
     sdk: flutter
   flutter_web_plugins:
     sdk: flutter
-  web: ^0.5.1
-  plugin_platform_interface: ^2.0.2
+  web: ^1.1.0
+  plugin_platform_interface: ^2.1.8
   uuid: ^4.5.1
   simple_print: ^0.0.1+2
 
