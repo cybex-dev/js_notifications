@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:js_notifications/core/notification_action_result.dart';
 import 'package:web/web.dart';
@@ -9,7 +8,6 @@ import '../interop/interop.dart' as interop;
 /// An implementation of [JsNotificationsPlatform] that uses method channels.
 class MethodChannelJsNotifications extends JsNotificationsPlatform {
   /// The method channel used to interact with the native platform.
-  @visibleForTesting
   final methodChannel = const MethodChannel('js_notifications');
 
   @override

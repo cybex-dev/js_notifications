@@ -5,7 +5,6 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
 import 'package:js_notifications/const/const.dart';
 import 'package:js_notifications/interop/interop.dart' as interop;
@@ -45,7 +44,6 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
     _startEventListeners();
   }
 
-  @visibleForTesting
   factory JsNotificationsWeb.protected() => JsNotificationsWeb._();
 
   static void registerWith(Registrar registrar) {

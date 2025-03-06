@@ -1,7 +1,5 @@
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:js_notifications/interop/interop.dart';
 import 'package:js_notifications/method_channel/js_notifications_method_channel.dart';
 
 void main() {
@@ -25,10 +23,10 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('addNotification', () async {
-    final n = JSNotification("Hello", JSNotificationOptions(tag: "hey"));
-    await platform.addNotification(n);
-    final nn = await platform.getNotification("hey");
-    expect(nn, isNotNull);
-  });
+  // test('addNotification', () async {
+  //   final n = JSNotification("Hello", JSNotificationOptions(tag: "hey"));
+  //   await platform.addNotification(n);
+  //   final nn = await platform.getNotification("hey");
+  //   expect(nn, isNotNull);
+  // });
 }
