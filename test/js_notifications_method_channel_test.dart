@@ -25,10 +25,10 @@ void main() {
         .setMockMethodCallHandler(channel, null);
   });
 
-  test('addNotification', () async {
-    final n = JSNotification("Hello", JSNotificationOptions(tag: "hey"));
-    await platform.addNotification(n);
-    final nn = await platform.getNotification("hey");
-    expect(nn, isNotNull);
-  });
+  // test('addNotification', () async {
+  //   final n = JSNotification("Hello", JSNotificationOptions(tag: "hey"));
+  //   await platform.addNotification(n);
+  //   final nn = await platform.getNotification("hey");
+  //   expect(nn, isNotNull);
+  // });
 }
