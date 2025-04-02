@@ -1,11 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:js_notifications/method_channel/js_notifications_method_channel.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  MethodChannelJsNotifications platform = MethodChannelJsNotifications();
   const MethodChannel channel = MethodChannel('js_notifications');
 
   setUp(() {
