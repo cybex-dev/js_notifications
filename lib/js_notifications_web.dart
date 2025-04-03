@@ -29,7 +29,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   late StreamSubscription<NotificationActionResult> _dismissSubscription;
 
   late final ServiceWorkerManager serviceWorkerManager;
-  late final interop.NotificationsAPI notificationsAPI;
+  late final interop.NotificationsAPI notificationsAPI = interop.NotificationsAPI.instance;
 
   StreamController<NotificationActionResult>? _dismissStream;
   StreamController<NotificationActionResult>? _actionStream;
