@@ -40,6 +40,10 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   bool get hasPermissions => throw UnimplementedError();
 
   @override
+  // TODO: implement permissions
+  String? get permission => throw UnimplementedError();
+  
+  @override
   // TODO: implement isSupported
   bool get isSupported => throw UnimplementedError();
 
