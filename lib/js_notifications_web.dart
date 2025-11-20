@@ -116,6 +116,9 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   bool get hasPermissions => notificationsAPI.hasPermission;
 
   @override
+  String? get permission => notificationsAPI.permission;
+
+  @override
   bool get isSupported => notificationsAPI.isSupported;
 
   @override

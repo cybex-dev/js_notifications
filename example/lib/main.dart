@@ -1,6 +1,5 @@
 import 'dart:async';
-//ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +39,20 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+
+    //Callback on taps
+    _jsNotificationsPlugin.tapStream.listen((event) {
+      switch (event.action) {
+        default:
+          if (event.tag == "rick_roll") {
+            openNewWindow("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+          } else if (event.tag == "star_wars_channel") {
+            openNewWindow("https://www.youtube.com/@StarWars");
+          }
+      }
+    });
+
+    //Callback on actions
     _jsNotificationsPlugin.actionStream.listen((event) {
       switch (event.action) {
         case "unexpected":
@@ -115,15 +128,11 @@ class _MyAppState extends State<MyApp> {
           }
 
         default:
-          {
-            if (event.tag == "rick_roll") {
-              openNewWindow("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
-            } else if (event.tag == "star_wars_channel") {
-              openNewWindow("https://www.youtube.com/@StarWars");
-            }
-          }
+          {}
       }
     });
+
+    //Callback on dismiss
     _jsNotificationsPlugin.dismissStream.listen((event) {
       switch (event.tag) {
         case "data-notification":
@@ -190,10 +199,32 @@ class _MyAppState extends State<MyApp> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Column(
+              spacing: 12,
               children: [
-                Text("Test Notification", style: _boldTextStyle),
+                Text("Notification permission", style: _boldTextStyle),
+                Text(
+                    "Permission status: ${_jsNotificationsPlugin.permission ?? "null"}"),
+                ElevatedButton(
+                  onPressed: () async {
+                    //requestPermissions() will only show modal if permission is
+                    // "default".
+                    //The three states are important regarding feedback to
+                    //users:
+                    //1. default = show request button
+                    //2. granted = ready to show
+                    //3. denied = blocked, you have to show instructions on how
+                    //to manually turn on notifications.
+                    await _jsNotificationsPlugin.requestPermissions();
+
+                    //Update permission text after request was sent
+                    setState(() {});
+                  },
+                  child: const Text("Request permission"),
+                ),
                 const SizedBox(height: 8),
+                Text("Test Notification", style: _boldTextStyle),
                 Row(
+                  spacing: 8,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
@@ -203,7 +234,6 @@ class _MyAppState extends State<MyApp> {
                       },
                       child: const Text("Test Notification"),
                     ),
-                    const SizedBox(width: 4),
                     ElevatedButton(
                       onPressed: () {
                         _dismissBasicNotification();
@@ -212,19 +242,18 @@ class _MyAppState extends State<MyApp> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Text("Data Notification", style: _boldTextStyle),
                 const SizedBox(height: 8),
+                Text("Data Notification", style: _boldTextStyle),
                 ElevatedButton(
                   onPressed: () {
                     _sendDataNotification();
                   },
                   child: const Text("Data Notification"),
                 ),
-                const SizedBox(height: 24),
-                Text("Custom Notifications", style: _boldTextStyle),
                 const SizedBox(height: 8),
+                Text("Custom Notifications", style: _boldTextStyle),
                 Row(
+                  spacing: 8,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
@@ -233,7 +262,6 @@ class _MyAppState extends State<MyApp> {
                       },
                       child: const Text("Expect the unexpected."),
                     ),
-                    const SizedBox(width: 4),
                     ElevatedButton(
                       onPressed: () {
                         _sendGrievous();
@@ -390,7 +418,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void openNewWindow(String url) {
-    html.window.open(url, "", 'noopener,noreferrer');
+    web.window.open(url, "", 'noopener,noreferrer');
   }
 
   Future<void> _showTimerNotification() {

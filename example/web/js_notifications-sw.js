@@ -83,6 +83,8 @@ const getClients = () => self.clients.matchAll(matchOptions);
 
 const hasPermissions = () => Notification.permission === 'granted';
 
+const permission = () => Notification.permission;
+
 // function showNotification(title, options, timer) {
 const showNotification = async (title, options) => {
     if (!hasPermissions()) {

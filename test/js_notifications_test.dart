@@ -55,6 +55,10 @@ class MockJsNotificationsPlatform
   bool get hasPermissions => throw UnimplementedError();
 
   @override
+  // TODO: implement permission
+  String? get permission => throw UnimplementedError();
+
+  @override
   // TODO: implement isSupported
   bool get isSupported => throw UnimplementedError();
 

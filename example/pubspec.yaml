@@ -28,7 +28,10 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
-  stop_watch_timer: ^3.2.1
+  stop_watch_timer: ^3.2.2
+
+  # For window.open support
+  web: ^1.1.1
 
 dev_dependencies:
   integration_test:

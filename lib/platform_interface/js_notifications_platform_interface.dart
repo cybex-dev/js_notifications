@@ -40,6 +40,14 @@ abstract class JsNotificationsPlatform extends PlatformInterface {
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/permission_static
   bool get hasPermissions;
 
+  /// Convenience method for checking browser notification raw status
+  /// wrapper for Dart's native JS notification [Notification.permission]
+  ///
+  /// Return values: granted, denied, default or [null]
+  ///
+  /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/permission_static
+  String? get permission;
+
   /// Convenience method checking browser notification support,
   /// wrapper for Dart's native JS notification [Notification.requestPermission()].
   /// Returns [true] if response matches 'granted'.
