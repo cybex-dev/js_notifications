@@ -1,60 +1,89 @@
 import 'dart:async';
-import 'dart:html' as html;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 
 import 'package:flutter/foundation.dart';
 import 'package:js_notifications/core/core.dart';
 import 'package:simple_print/simple_print.dart';
+import 'package:web/web.dart' as web;
 
 import '../const/const.dart';
 import '../const/sw_events.dart';
 import '../core/user_agent.dart';
 import '../interop/interop.dart' as interop;
+import '../utils/utils.dart';
 
 typedef Consumer<T> = void Function(T t);
 
 class ServiceWorkerManager {
   static const String tag = 'service_worker_manager';
 
+  /// The Notifications API instance, used to request permission and check permission status
   late final interop.NotificationsAPI _notificationApi;
 
+  /// The scope URL for the service worker. See https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register#scope
   late final String _scope;
 
-  ServiceWorkerManager(
-      {this.onNotificationTap,
-      this.onNotificationAction,
-      this.onNotificationDismiss,
-      required String scopeUrl}) {
+  ServiceWorkerManager({
+    this.onNotificationTap,
+    this.onNotificationAction,
+    this.onNotificationDismiss,
+    required String scopeUrl,
+  }) {
     _scope = scopeUrl;
     _notificationApi = interop.NotificationsAPI.instance;
     _setupServiceWorker();
   }
 
+  /// Callbacks for notification events
   Consumer<NotificationActionResult>? onNotificationAction;
   Consumer<NotificationActionResult>? onNotificationDismiss;
   Consumer<NotificationActionResult>? onNotificationTap;
 
-  html.ServiceWorkerContainer? _webServiceWorkerContainerDelegate;
+  // Current service worker, null if not registered / not ready yet
+  web.ServiceWorker? _serviceWorker;
 
-  html.ServiceWorker? _serviceWorker;
+  // This manager's registration — the source of truth for install/update
+  // tracking (updatefound, installing/waiting/active workers).
+  web.ServiceWorkerRegistration? _registration;
 
-  StreamSubscription<html.Event>? _serviceWorkerErrorSubscription;
-  StreamSubscription<html.MessageEvent>?
-      _serviceWorkerMessageStreamSubscription;
+  /// ServiceWorker lifecycle states (ServiceWorkerState enum values).
+  static const String _stateActivated = 'activated';
+  static const String _stateRedundant = 'redundant';
 
+  /// Event stream providers for service worker events
+  static const _messageEvent = web.EventStreamProvider<web.MessageEvent>(SWEvents.message);
+  static const _controllerChangeEvent = web.EventStreamProvider<web.Event>(SWEvents.controllerchange);
+  static const _stateChangeEvent = web.EventStreamProvider<web.Event>(SWEvents.statechange);
+  static const _errorEvent = web.EventStreamProvider<web.Event>(SWEvents.error);
+  static const _updateFoundEvent = web.EventStreamProvider<web.Event>(SWEvents.updatefound);
+
+  /// Subscriptions to service worker events
+  StreamSubscription<web.MessageEvent>? _serviceWorkerMessageStreamSubscription;
+  StreamSubscription<web.Event>? _containerControllerChangeSubscription;
+  StreamSubscription<web.Event>? _serviceWorkerStateChangeSubscription;
+  StreamSubscription<web.Event>? _serviceWorkerErrorSubscription;
+  StreamSubscription<web.Event>? _registrationUpdateFoundSubscription;
+  StreamSubscription<web.Event>? _installingWorkerStateChangeSubscription;
+
+  /// Platform-specific limits for notification actions
   static const int platformLimitMac = 2;
   static const int platformLimitLinux = 2;
   static const int platformLimitWin = 3;
   static const int platformLimitDefault = 3;
 
-  // set the active service worker, detach events from current and attach new event handlers
-  void _updateServiceWorker(html.ServiceWorker? value) {
-    if (_serviceWorker != null) {
-      _detachServiceWorkerEvents(_serviceWorker!);
-    }
+  /// set the active service worker, detach events from current and attach new event handlers
+  void _updateServiceWorker(web.ServiceWorker? value) {
+    _serviceWorkerStateChangeSubscription?.cancel();
+    _serviceWorkerErrorSubscription?.cancel();
+    _serviceWorkerStateChangeSubscription = null;
+    _serviceWorkerErrorSubscription = null;
+
     if (value != null) {
-      _attachServiceWorkerEvents(value);
-    }
-    if (value == null) {
+      printDebug("Attaching service worker event listeners (${value.hashCode})");
+      _serviceWorkerStateChangeSubscription = _stateChangeEvent.forTarget(value).listen(_onServiceWorkerStateChange);
+      _serviceWorkerErrorSubscription = _errorEvent.forTarget(value).listen(_onServiceWorkerError);
+    } else {
       printDebug("Service Worker is null");
     }
     _serviceWorker = value;
@@ -65,139 +94,100 @@ class ServiceWorkerManager {
   /// into the primary service worker provided by Flutter
   void _setupServiceWorker() async {
     printDebug("Setting up service worker");
-    _webServiceWorkerContainerDelegate = html.window.navigator.serviceWorker;
-    if (_webServiceWorkerContainerDelegate == null) {
+    // `navigator.serviceWorker` is non-null in package:web — feature-detect
+    // instead (absent in insecure contexts and unsupported browsers).
+    if (!web.window.navigator.has('serviceWorker')) {
       printDebug("No service worker found.", tag: tag);
       return;
     }
-
-    final delegate = _webServiceWorkerContainerDelegate!;
+    final delegate = web.window.navigator.serviceWorker;
 
     // attach SW event listeners to respond to incoming messages from SW
-    _attachServiceWorkerContainerEvents(delegate);
+    _serviceWorkerMessageStreamSubscription = _messageEvent.forTarget(delegate).listen(_onServiceWorkerContainerMessageEvent);
+    _containerControllerChangeSubscription = _controllerChangeEvent.forTarget(delegate).listen(_onServiceWorkerContainerControllerChange);
 
-    // final registration = await delegate.getRegistration(scope);
-    final options = {'scope': _scope, 'type': 'module'};
+    final options = web.RegistrationOptions(scope: _scope, type: 'module');
 
     printDebug("Registering service worker at '/$jsNotificationsSwJs'.");
-    final registration = await delegate
-        .register("/$jsNotificationsSwJs", options)
-        .catchError((e) {
+    final web.ServiceWorkerRegistration registration;
+    try {
+      registration = await delegate.register("/$jsNotificationsSwJs".toJS, options).toDart;
+    } catch (e) {
       printDebug(e);
       printDebug(
           "Failed to register $jsNotificationsSwJs, please make sure you copied over $jsNotificationsSwJs into your project's web folder e.g. root_project/web/$jsNotificationsSwJs");
-      throw e;
-    });
+      rethrow;
+    }
 
-    _updateServiceWorker(registration.active ?? registration.installing);
-  }
+    _registration = registration;
 
-  void _attachServiceWorkerEvents(html.ServiceWorker serviceWorker) {
-    printDebug(
-        "Attaching service worker event listeners (${serviceWorker.hashCode})");
-    _serviceWorkerErrorSubscription =
-        serviceWorker.onError.listen(_onServiceWorkerErrorEvent);
-    serviceWorker.addEventListener(SWEvents.message, _onServiceWorkerMessage);
-    serviceWorker.addEventListener(
-        SWEvents.statechange, _onServiceWorkerStateChange);
-    serviceWorker.addEventListener(SWEvents.error, _onServiceWorkerError);
-    serviceWorker.addEventListener(SWEvents.install, _onServiceWorkerInstall);
-    serviceWorker.addEventListener(SWEvents.activate, _onServiceWorkerActivate);
-    serviceWorker.addEventListener(SWEvents.fetch, _onServiceWorkerFetch);
-    serviceWorker.addEventListener(SWEvents.push, _onServiceWorkerPush);
-    serviceWorker.addEventListener(SWEvents.pushsubscriptionchange,
-        _onServiceWorkerPushSubscriptionChange);
-    serviceWorker.addEventListener(SWEvents.sync, _onServiceWorkerSync);
-  }
+    // Track updates to *our* registration: when a new (byte-different) worker
+    // ships, `updatefound` fires and the new worker must be adopted once it
+    // activates — otherwise `_serviceWorker` keeps pointing at the old,
+    // soon-to-be-redundant worker and postMessage goes nowhere until reload.
+    _registrationUpdateFoundSubscription =
+        _updateFoundEvent.forTarget(registration).listen(_onRegistrationUpdateFound);
 
-  void _detachServiceWorkerEvents(html.ServiceWorker serviceWorker) {
-    printDebug(
-        "Detaching service worker event listeners (${serviceWorker.hashCode})");
-    serviceWorker.removeEventListener(
-        SWEvents.message, _onServiceWorkerMessage);
-    serviceWorker.removeEventListener(
-        SWEvents.statechange, _onServiceWorkerStateChange);
-    serviceWorker.removeEventListener(SWEvents.error, _onServiceWorkerError);
-    serviceWorker.removeEventListener(
-        SWEvents.install, _onServiceWorkerInstall);
-    serviceWorker.removeEventListener(
-        SWEvents.activate, _onServiceWorkerActivate);
-    serviceWorker.removeEventListener(SWEvents.fetch, _onServiceWorkerFetch);
-    serviceWorker.removeEventListener(SWEvents.push, _onServiceWorkerPush);
-    serviceWorker.removeEventListener(SWEvents.pushsubscriptionchange,
-        _onServiceWorkerPushSubscriptionChange);
-    serviceWorker.removeEventListener(SWEvents.sync, _onServiceWorkerSync);
-  }
-
-  void _attachServiceWorkerContainerEvents(
-      html.ServiceWorkerContainer serviceWorkerContainer) {
-    printDebug(
-        "Attaching service worker container event listeners (${serviceWorkerContainer.hashCode})");
-    _serviceWorkerMessageStreamSubscription = serviceWorkerContainer.onMessage
-        .listen(_onServiceWorkerContainerMessageEvent);
-    serviceWorkerContainer.addEventListener(
-        SWEvents.controllerchange, _onServiceWorkerContainerControllerChange);
-    serviceWorkerContainer.addEventListener(
-        SWEvents.statechange, _onServiceWorkerContainerStateChange);
-    serviceWorkerContainer.addEventListener(
-        SWEvents.error, _onServiceWorkerContainerError);
-    serviceWorkerContainer.addEventListener(
-        SWEvents.install, _onServiceWorkerContainerInstall);
-    serviceWorkerContainer.addEventListener(
-        SWEvents.activate, _onServiceWorkerContainerActivate);
-    serviceWorkerContainer.addEventListener(
-        SWEvents.fetch, _onServiceWorkerContainerFetch);
-  }
-
-  void _detachServiceWorkerContainerEvents(
-      html.ServiceWorkerContainer serviceWorkerContainer) {
-    printDebug(
-        "Detaching service worker container event listeners (${serviceWorkerContainer.hashCode})");
-    _serviceWorkerMessageStreamSubscription?.cancel();
-    serviceWorkerContainer.removeEventListener(
-        SWEvents.controllerchange, _onServiceWorkerContainerControllerChange);
-    serviceWorkerContainer.removeEventListener(
-        SWEvents.statechange, _onServiceWorkerContainerStateChange);
-    serviceWorkerContainer.removeEventListener(
-        SWEvents.error, _onServiceWorkerContainerError);
-    serviceWorkerContainer.removeEventListener(
-        SWEvents.install, _onServiceWorkerContainerInstall);
-    serviceWorkerContainer.removeEventListener(
-        SWEvents.activate, _onServiceWorkerContainerActivate);
-    serviceWorkerContainer.removeEventListener(
-        SWEvents.fetch, _onServiceWorkerContainerFetch);
+    // Fresh install: `active` is null and we adopt the `installing` worker —
+    // it is the same object through installing → activated, so the reference
+    // stays valid and _onServiceWorkerStateChange observes each transition.
+    _updateServiceWorker(registration.active ?? registration.waiting ?? registration.installing);
   }
 
   /// Service Worker Container event listeners
-  void _onServiceWorkerContainerControllerChange(html.Event event) {
+  void _onServiceWorkerContainerControllerChange(web.Event event) {
+    // Log only — deliberately NOT adopting `container.controller` here. The
+    // controller is the worker controlling the *page*, and this plugin's
+    // scope controls no pages, so the controller is never our worker (it is
+    // typically Flutter's own flutter_service_worker.js). Adopting it would
+    // silently redirect postMessage to a worker that ignores our protocol.
+    // Updates to our own worker are tracked via `updatefound`/`statechange`
+    // on the registration instead (see _onRegistrationUpdateFound).
     printDebug("Service worker container controller changed: $event", tag: tag);
-    _updateServiceWorker(_webServiceWorkerContainerDelegate?.controller);
   }
 
-  void _onServiceWorkerContainerStateChange(html.Event event) {
-    printDebug("Service worker container state change: $event", tag: tag);
+  /// Registration event listeners
+  ///
+  /// A new service worker version has started installing on our registration
+  /// (browsers check for updates on register()/navigation/every 24h). Watch
+  /// its state and adopt it once it activates; if it ends up redundant
+  /// (install failed or superseded), stop tracking it.
+  void _onRegistrationUpdateFound(web.Event event) {
+    final installing = _registration?.installing;
+    printDebug("Service worker update found (state: ${installing?.state})", tag: tag);
+    if (installing == null) {
+      return;
+    }
+    _trackInstallingWorker(installing);
   }
 
-  void _onServiceWorkerContainerError(html.Event event) {
-    printDebug("Service worker container error: $event", tag: tag);
+  void _trackInstallingWorker(web.ServiceWorker worker) {
+    _installingWorkerStateChangeSubscription?.cancel();
+    _installingWorkerStateChangeSubscription =
+        _stateChangeEvent.forTarget(worker).listen((event) {
+      final state = worker.state;
+      printDebug("Installing service worker state change: $state", tag: tag);
+      if (state == _stateActivated) {
+        _installingWorkerStateChangeSubscription?.cancel();
+        _installingWorkerStateChangeSubscription = null;
+        _updateServiceWorker(worker);
+      } else if (state == _stateRedundant) {
+        _installingWorkerStateChangeSubscription?.cancel();
+        _installingWorkerStateChangeSubscription = null;
+      }
+    });
   }
 
-  void _onServiceWorkerContainerInstall(html.Event event) {
-    printDebug("Service worker container install: $event", tag: tag);
-  }
-
-  void _onServiceWorkerContainerActivate(html.Event event) {
-    printDebug("Service worker container activate: $event", tag: tag);
-    _updateServiceWorker(_webServiceWorkerContainerDelegate?.controller);
-  }
-
-  void _onServiceWorkerContainerFetch(html.Event event) {
-    printDebug("Service worker container fetch: $event", tag: tag);
-  }
-
-  void _onServiceWorkerContainerMessageEvent(html.MessageEvent event) {
+  void _onServiceWorkerContainerMessageEvent(web.MessageEvent event) {
     printDebug("Service worker container message event: $event", tag: tag);
-    final map = Map<String, dynamic>.from(event.data);
+    // dart:js_interop delivers `event.data` as an opaque JS value — dartify()
+    // + deepCastMap replace dart:html's implicit conversion to a Dart Map.
+    final data = event.data.dartify();
+    if (data is! Map) {
+      printDebug("Ignoring service worker message with non-map payload: $data", tag: tag);
+      return;
+    }
+    final map = deepCastMap(data);
     final result = NotificationActionResult.fromJson(map);
     final type = map["type"];
     if (type == SWEvents.click) {
@@ -228,45 +218,21 @@ class ServiceWorkerManager {
   }
 
   /// Service Worker event listeners
-  void _onServiceWorkerMessage(html.Event event) {
-    printDebug("Service worker message: $event", tag: tag);
+  void _onServiceWorkerStateChange(web.Event event) {
+    final state = _serviceWorker?.state;
+    printDebug("Service worker state change: $state", tag: tag);
+    if (state == _stateRedundant) {
+      // The worker we hold was replaced (update activated) or discarded —
+      // fall back to the registration's current active worker. Usually the
+      // updatefound path has already adopted the replacement; this is the
+      // safety net for orderings where `redundant` arrives first (adoption
+      // is idempotent).
+      _updateServiceWorker(_registration?.active);
+    }
   }
 
-  void _onServiceWorkerStateChange(html.Event event) {
-    printDebug("Service worker state change: ${_serviceWorker?.state}",
-        tag: tag);
-  }
-
-  void _onServiceWorkerError(html.Event event) {
+  void _onServiceWorkerError(web.Event event) {
     printDebug("Service worker error: $event", tag: tag);
-  }
-
-  void _onServiceWorkerErrorEvent(html.Event event) {
-    printDebug("Service worker error event: $event", tag: tag);
-  }
-
-  void _onServiceWorkerInstall(html.Event event) {
-    printDebug("Service worker install: $event", tag: tag);
-  }
-
-  void _onServiceWorkerActivate(html.Event event) {
-    printDebug("Service worker activate: $event", tag: tag);
-  }
-
-  void _onServiceWorkerFetch(html.Event event) {
-    printDebug("Service worker fetch: $event", tag: tag);
-  }
-
-  void _onServiceWorkerPush(html.Event event) {
-    printDebug("Service worker state change: $event", tag: tag);
-  }
-
-  void _onServiceWorkerPushSubscriptionChange(html.Event event) {
-    printDebug("Service worker push subscription change: $event", tag: tag);
-  }
-
-  void _onServiceWorkerSync(html.Event event) {
-    printDebug("Service worker sync: $event", tag: tag);
   }
 
   Future<void> postNotification(
@@ -295,40 +261,25 @@ class ServiceWorkerManager {
     switch (platformFromUserAgent) {
       case Platform.macos:
         if (actions.length > platformLimitMac) {
-          final ignoredActions = actions
-              .sublist(platformLimitMac)
-              .map((e) => "'${e.action}'")
-              .join(", ");
-          printDebug(
-              "macOS Notification centre only supports up to 3 actions, ignored the following actions: [$ignoredActions]");
+          final ignoredActions = actions.sublist(platformLimitMac).map((e) => "'${e.action}'").join(", ");
+          printDebug("macOS Notification centre only supports up to 3 actions, ignored the following actions: [$ignoredActions]");
         }
         break;
       case Platform.linux:
         if (actions.length > platformLimitLinux) {
-          final ignoredActions = actions
-              .sublist(platformLimitLinux)
-              .map((e) => "'${e.action}'")
-              .join(", ");
-          printDebug(
-              "Linux platforms usually supports up to 3 actions, ignored the following actions: [$ignoredActions]");
+          final ignoredActions = actions.sublist(platformLimitLinux).map((e) => "'${e.action}'").join(", ");
+          printDebug("Linux platforms usually supports up to 3 actions, ignored the following actions: [$ignoredActions]");
         }
         break;
       case Platform.windows:
         if (actions.length > platformLimitWin) {
-          final ignoredActions = actions
-              .sublist(platformLimitWin)
-              .map((e) => "'${e.action}'")
-              .join(", ");
-          printDebug(
-              "Windows 10 Toast Notification only supports up to 3 actions, ignored the following actions: [$ignoredActions]");
+          final ignoredActions = actions.sublist(platformLimitWin).map((e) => "'${e.action}'").join(", ");
+          printDebug("Windows 10 Toast Notification only supports up to 3 actions, ignored the following actions: [$ignoredActions]");
         }
       case Platform.unknown:
         // default:
         if (actions.length > platformLimitDefault) {
-          final ignoredActions = actions
-              .sublist(platformLimitDefault)
-              .map((e) => "'${e.action}'")
-              .join(", ");
+          final ignoredActions = actions.sublist(platformLimitDefault).map((e) => "'${e.action}'").join(", ");
           printDebug(
               "Could not determine the platform from user agent, most platforms ignore actions beyond 3, ignored the following actions may be ignored: [$ignoredActions]");
         }
@@ -369,9 +320,13 @@ class ServiceWorkerManager {
       }
     }
 
-    if (_serviceWorker != null) {
-      Map<String, dynamic> json = payload.toMap();
-      _serviceWorker!.postMessage(json);
+    final serviceWorker = _serviceWorker;
+    if (serviceWorker != null) {
+      final Map<String, dynamic> json = payload.toMap();
+      // dart:js_interop postMessage takes a JS value — jsify() converts the
+      // Dart map (JSON-safe values only) explicitly, where dart:html used to
+      // convert implicitly.
+      serviceWorker.postMessage(json.jsify());
     } else {
       printDebug("No service worker ready.");
       return;
@@ -379,12 +334,11 @@ class ServiceWorkerManager {
   }
 
   Future<void> dispose() async {
-    if (_serviceWorker != null) {
-      _detachServiceWorkerEvents(_serviceWorker!);
-    }
-    if (_webServiceWorkerContainerDelegate != null) {
-      _detachServiceWorkerContainerEvents(_webServiceWorkerContainerDelegate!);
-    }
+    await _serviceWorkerMessageStreamSubscription?.cancel();
+    await _containerControllerChangeSubscription?.cancel();
+    await _serviceWorkerStateChangeSubscription?.cancel();
     await _serviceWorkerErrorSubscription?.cancel();
+    await _registrationUpdateFoundSubscription?.cancel();
+    await _installingWorkerStateChangeSubscription?.cancel();
   }
 }
