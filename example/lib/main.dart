@@ -1,6 +1,4 @@
 import 'dart:async';
-//ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +6,7 @@ import 'package:js_notifications/interop/interop.dart';
 import 'package:js_notifications/js_notifications_web.dart';
 import 'package:js_notifications/platform_interface/js_notifications_platform_interface.dart';
 import 'package:stop_watch_timer/stop_watch_timer.dart';
+import 'package:web/web.dart' as web;
 
 void main() {
   runApp(const MyApp());
@@ -390,7 +389,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void openNewWindow(String url) {
-    html.window.open(url, "", 'noopener,noreferrer');
+    web.window.open(url, "", 'noopener,noreferrer');
   }
 
   Future<void> _showTimerNotification() {
