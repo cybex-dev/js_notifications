@@ -1,5 +1,3 @@
-import 'package:web/web.dart';
-
 import '../../core/serializable.dart';
 import 'enums.dart';
 import 'js_notification_action.dart';
@@ -47,8 +45,11 @@ class JSNotificationOptions implements Serializable {
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/timestamp
   final int? timestamp;
 
+  /// Vibration pattern: alternating vibrate/pause durations in milliseconds,
+  /// e.g. `[200, 100, 200]`.
+  ///
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/vibrate
-  final VibratePattern? vibrate;
+  final List<int>? vibrate;
 
   JSNotificationOptions({
     this.actions,
@@ -100,7 +101,7 @@ class JSNotificationOptions implements Serializable {
     bool? silent,
     String? tag,
     int? timestamp,
-    VibratePattern? vibrate,
+    List<int>? vibrate,
   }) {
     return JSNotificationOptions(
       actions: actions ?? this.actions,
