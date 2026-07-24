@@ -1,5 +1,4 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:web/web.dart' as web;
 
 import '../core/core.dart';
 import '../interop/interop.dart' as interop;
@@ -66,7 +65,7 @@ abstract class JsNotificationsPlatform extends PlatformInterface {
     bool? silent,
     String? tag,
     int? timestamp,
-    web.VibratePattern? vibrate,
+    List<int>? vibrate,
   });
 
   /// Dismiss notification with ID

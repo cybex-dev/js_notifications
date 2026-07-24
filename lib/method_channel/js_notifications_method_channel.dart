@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:js_notifications/core/notification_action_result.dart';
-import 'package:web/web.dart';
 
 import '../platform_interface/js_notifications_platform_interface.dart';
 import '../interop/interop.dart' as interop;
@@ -64,7 +63,7 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
       bool? silent,
       String? tag,
       int? timestamp,
-      VibratePattern? vibrate}) {
+      List<int>? vibrate}) {
     // TODO: implement showNotification
     throw UnimplementedError();
   }

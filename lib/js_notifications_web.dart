@@ -139,7 +139,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
     bool? silent,
     String? tag,
     int? timestamp,
-    web.VibratePattern? vibrate,
+    List<int>? vibrate,
   }) {
     final options = interop.JSNotificationOptions(
       actions: actions,
