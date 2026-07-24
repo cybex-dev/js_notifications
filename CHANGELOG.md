@@ -1,3 +1,7 @@
+## Next release
+
+* **BREAKING**: minimum Flutter version raised to 3.22 (stable WASM toolchain floor).
+
 ## 0.0.5
 
 * Fix `NotificationAPI` late init
