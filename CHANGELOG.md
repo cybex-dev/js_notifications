@@ -2,6 +2,9 @@
 
 * **WebAssembly support**: full migration off deprecated `dart:html` to `package:web` +
   `dart:js_interop` — the package now compiles with `flutter build web --wasm`.
+* **BREAKING**: `badge` is now `String?` — the URL of the monochrome badge image, per the Web
+  API's `Notification.badge` (previously mistyped as `int?`, which browsers ignored; not to be
+  confused with the numeric Badging API, `navigator.setAppBadge`).
 * **BREAKING**: `vibrate` is now `List<int>?` (previously
   `web.VibratePattern?`); `package:web` types no longer appear in the public API.
 * **BREAKING**: minimum Flutter version raised to 3.22 (stable WASM toolchain floor).
