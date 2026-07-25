@@ -50,9 +50,11 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
       onNotificationTap: _onNotificationTap,
       onNotificationAction: _onNotificationAction,
       onNotificationDismiss: _onNotificationDismiss,
-      scopeUrl: _scopeUrl,
     );
+
+    _initFuture = serviceWorkerManager.init();
   }
+
 
   void _startEventListeners() {
     _dismissSubscription = dismissStream.listen((event) {

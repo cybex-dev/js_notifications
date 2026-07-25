@@ -24,15 +24,25 @@ class ServiceWorkerManager {
   /// The scope URL for the service worker. See https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register#scope
   late final String _scope;
 
-  ServiceWorkerManager({
-    this.onNotificationTap,
-    this.onNotificationAction,
-    this.onNotificationDismiss,
-    required String scopeUrl,
-  }) {
-    _scope = scopeUrl;
+  ServiceWorkerManager._() {
     _notificationApi = interop.NotificationsAPI.instance;
-    _setupServiceWorker();
+  }
+
+  static final ServiceWorkerManager _instance = ServiceWorkerManager._();
+
+  /// The single [ServiceWorkerManager] for this page.
+  static ServiceWorkerManager get instance => _instance;
+
+  /// Returns the singleton [instance], assigning any non-null callbacks.
+  factory ServiceWorkerManager({
+    Consumer<NotificationActionResult>? onNotificationTap,
+    Consumer<NotificationActionResult>? onNotificationAction,
+    Consumer<NotificationActionResult>? onNotificationDismiss,
+  }) {
+    _instance.onNotificationTap = onNotificationTap ?? _instance.onNotificationTap;
+    _instance.onNotificationAction = onNotificationAction ?? _instance.onNotificationAction;
+    _instance.onNotificationDismiss = onNotificationDismiss ?? _instance.onNotificationDismiss;
+    return _instance;
   }
 
   /// Callbacks for notification events
