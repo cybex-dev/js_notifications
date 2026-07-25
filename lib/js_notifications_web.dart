@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
-import 'package:js_notifications/const/const.dart';
 import 'package:js_notifications/interop/interop.dart' as interop;
 import 'package:js_notifications/managers/service_worker_manager.dart';
 import 'package:simple_print/simple_print.dart';
@@ -30,8 +29,6 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   StreamController<NotificationActionResult>? _actionStream;
   StreamController<NotificationActionResult>? _tapStream;
 
-  static String _scopeUrl = defaultScope;
-
   /// Constructs a JsNotificationsWeb
   JsNotificationsWeb._() {
     setAppTag("js_notifications");
@@ -55,6 +52,13 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
     _initFuture = serviceWorkerManager.init();
   }
 
+  late final Future<bool> _initFuture;
+
+  @override
+  Future<bool> initialize() => _initFuture;
+
+  @override
+  bool get isInitialized => serviceWorkerManager.isInitialized;
 
   void _startEventListeners() {
     _dismissSubscription = dismissStream.listen((event) {
@@ -76,7 +80,14 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   @override
   set scopeUrl(String value) {
-    _scopeUrl = value;
+    // Fire-and-forget by nature of a setter; awaits the initial registration
+    // internally, then re-registers the current worker under the new scope.
+    unawaited(serviceWorkerManager.updateScope(value));
+  }
+
+  @override
+  Future<void> registerServiceWorker({String? url, String? scope}) {
+    return serviceWorkerManager.registerServiceWorker(url: url, scope: scope);
   }
 
   @override

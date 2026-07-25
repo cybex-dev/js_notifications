@@ -85,10 +85,6 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   @override
   Stream<NotificationActionResult> get tapStream => throw UnimplementedError();
 
-  @override
-  set scopeUrl(String value) {
-    // TODO: implement scopeUrl
-  }
 
   @override
   Future<List<interop.JSNotification>> getAllNotifications() {

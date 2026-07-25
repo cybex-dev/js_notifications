@@ -15,14 +15,36 @@ import '../utils/utils.dart';
 
 typedef Consumer<T> = void Function(T t);
 
+/// Manages the plugin's dedicated service worker: registration, lifecycle
+/// tracking (install/update/redundant) and the two-way `postMessage` bridge.
+///
+/// Singleton — a page has a single service worker registration for this
+/// plugin, and the manager owns the listeners attached to it. Obtain it via
+/// [ServiceWorkerManager.instance], or via the factory constructor to also
+/// (re)assign the notification event callbacks:
+///
+/// ```dart
+/// final manager = ServiceWorkerManager(
+///   onNotificationTap: _onTap,
+///   onNotificationAction: _onAction,
+///   onNotificationDismiss: _onDismiss,
+/// );
+/// await manager.init();
+/// ```
+///
+/// Callbacks passed to the factory overwrite previously assigned ones; omitted
+/// (null) callbacks are left untouched, so a later call cannot silently
+/// detach existing handlers.
 class ServiceWorkerManager {
   static const String tag = 'service_worker_manager';
 
   /// The Notifications API instance, used to request permission and check permission status
   late final interop.NotificationsAPI _notificationApi;
 
-  /// The scope URL for the service worker. See https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register#scope
-  late final String _scope;
+  /// Completes with the result of the initial (bundled) service worker
+  /// registration. Non-null once [init] has been called; awaited internally so
+  /// nothing races the automatic registration.
+  Future<bool>? _initFuture;
 
   ServiceWorkerManager._() {
     _notificationApi = interop.NotificationsAPI.instance;
@@ -45,6 +67,47 @@ class ServiceWorkerManager {
     return _instance;
   }
 
+  /// Whether [init] has completed successfully and a service worker is
+  /// registered and tracked by this manager.
+  bool get isInitialized => _serviceWorker != null;
+
+  /// Whether this browser exposes the Service Worker API. False in insecure
+  /// contexts (non-https, non-localhost) and unsupported browsers, in which
+  /// case [init] returns false and notifications cannot be shown.
+  bool get isSupported => web.window.navigator.has('serviceWorker');
+
+  /// Initialises the manager: registers the bundled service worker, cleans up
+  /// legacy registrations, and attaches the event listeners that relay
+  /// notification events back to Dart.
+  ///
+  /// Must be called before any notification can be posted — [postMessage] and
+  /// friends await initialisation internally, so calls made while init is
+  /// still in flight are queued rather than dropped.
+  ///
+  /// Returns true when a service worker was registered successfully, false
+  /// when service workers are unsupported (see [isSupported]) or registration
+  /// failed — failures are logged, never thrown, so plugin registration cannot
+  /// break app startup.
+  ///
+  /// Idempotent: repeat calls return the result of the first call without
+  /// re-registering. Use [registerServiceWorker] to (re-)register a custom
+  /// worker or scope after initialisation.
+  Future<bool> init() {
+    return _initFuture ??= _setupServiceWorker().then((registered) {
+      if (registered) {
+        printDebug("Service worker initialised.", tag: tag);
+      }
+      return registered;
+    }).catchError((e) {
+      printDebug("Service worker setup failed: $e", tag: tag);
+      return false;
+    });
+  }
+
+  /// Awaits [init] if it is already running, or runs it on demand. Lets public
+  /// entry points work regardless of whether the caller awaited [init] first.
+  Future<bool> _ensureInitialized() => init();
+
   /// Callbacks for notification events
   Consumer<NotificationActionResult>? onNotificationAction;
   Consumer<NotificationActionResult>? onNotificationDismiss;
@@ -52,6 +115,15 @@ class ServiceWorkerManager {
 
   // Current service worker, null if not registered / not ready yet
   web.ServiceWorker? _serviceWorker;
+
+  // The service worker container; kept so registerServiceWorker can
+  // re-register after the initial setup.
+  web.ServiceWorkerContainer? _container;
+
+  // Custom worker script URL passed to [registerServiceWorker], null while
+  // the bundled asset is in use. Lets [updateScope] re-register the same
+  // script under a new scope.
+  String? _customUrl;
 
   // This manager's registration — the source of truth for install/update
   // tracking (updatefound, installing/waiting/active workers).
@@ -99,33 +171,69 @@ class ServiceWorkerManager {
     _serviceWorker = value;
   }
 
-  /// Grab service worker for current URL
-  /// We cannot have conflicting server workers, this will require us to use our own scope or hook
-  /// into the primary service worker provided by Flutter
-  void _setupServiceWorker() async {
+  /// Set up the plugin's dedicated service worker.
+  ///
+  /// The worker script ships as a Flutter asset of this package
+  /// ([bundledSwAssetPath]) and registers automatically.
+  ///
+  /// Flutter's SW `flutter_service_worker.js` runs on default scope `/`,
+  /// thus `js_notifications` SW runs on it's own set scope which controls no pages.
+  ///
+  /// Returns false when service workers are unsupported; throws when
+  /// registration itself fails (handled by [init]).
+  Future<bool> _setupServiceWorker() async {
     printDebug("Setting up service worker");
     // `navigator.serviceWorker` is non-null in package:web — feature-detect
     // instead (absent in insecure contexts and unsupported browsers).
-    if (!web.window.navigator.has('serviceWorker')) {
-      printDebug("No service worker found.", tag: tag);
-      return;
+    if (!isSupported) {
+      printDebug(
+          "Service workers are not supported in this browser or context "
+          "(a secure context — https or localhost — is required); notifications are unavailable.",
+          tag: tag);
+      return false;
     }
     final delegate = web.window.navigator.serviceWorker;
+    _container = delegate;
 
     // attach SW event listeners to respond to incoming messages from SW
     _serviceWorkerMessageStreamSubscription = _messageEvent.forTarget(delegate).listen(_onServiceWorkerContainerMessageEvent);
     _containerControllerChangeSubscription = _controllerChangeEvent.forTarget(delegate).listen(_onServiceWorkerContainerControllerChange);
 
-    final options = web.RegistrationOptions(scope: _scope, type: 'module');
+    // Clean up legacy registrations of a manually copied worker.
+    await _unregisterLegacyServiceWorkers(delegate);
 
-    printDebug("Registering service worker at '/$jsNotificationsSwJs'.");
+    await _register(delegate, _resolveBundledServiceWorkerUrl());
+    return true;
+  }
+
+  /// Resolves the bundled service worker asset against the document's base
+  /// URI, so deployments under a non-root `<base href>` resolve correctly.
+  String _resolveBundledServiceWorkerUrl() {
+    return Uri.parse(web.document.baseURI).resolve(bundledSwAssetPath).toString();
+  }
+
+  /// Registers [url] as this manager's service worker and wires up
+  /// registration-level update tracking. When [scope] is null the browser
+  /// default (the script's directory) is used.
+  Future<void> _register(
+    web.ServiceWorkerContainer delegate,
+    String url, {
+    String? scope,
+  }) async {
+    printDebug("Registering service worker at '$url'.");
     final web.ServiceWorkerRegistration registration;
     try {
-      registration = await delegate.register("/$jsNotificationsSwJs".toJS, options).toDart;
+      final promise = scope != null ? delegate.register(url.toJS, web.RegistrationOptions(scope: scope)) : delegate.register(url.toJS);
+      registration = await promise.toDart;
     } catch (e) {
       printDebug(e);
-      printDebug(
-          "Failed to register $jsNotificationsSwJs, please make sure you copied over $jsNotificationsSwJs into your project's web folder e.g. root_project/web/$jsNotificationsSwJs");
+      printDebug("Failed to register the js_notifications service worker at '$url'"
+          "${scope != null ? " with scope '$scope'" : ""}. "
+          "The script is bundled as a Flutter asset of the js_notifications package and should be deployed automatically. "
+          "If you are using a custom worker URL via registerServiceWorker(), verify the file exists at the given URL. "
+          "If you passed a custom scope outside the script's directory, the server must send a "
+          "'Service-Worker-Allowed' header covering that scope (for the bundled asset, any scope broader than "
+          "'$bundledSwAssetDirMarker' needs it).");
       rethrow;
     }
 
@@ -135,13 +243,82 @@ class ServiceWorkerManager {
     // ships, `updatefound` fires and the new worker must be adopted once it
     // activates — otherwise `_serviceWorker` keeps pointing at the old,
     // soon-to-be-redundant worker and postMessage goes nowhere until reload.
-    _registrationUpdateFoundSubscription =
-        _updateFoundEvent.forTarget(registration).listen(_onRegistrationUpdateFound);
+    _registrationUpdateFoundSubscription?.cancel();
+    _registrationUpdateFoundSubscription = _updateFoundEvent.forTarget(registration).listen(_onRegistrationUpdateFound);
 
     // Fresh install: `active` is null and we adopt the `installing` worker —
     // it is the same object through installing → activated, so the reference
     // stays valid and _onServiceWorkerStateChange observes each transition.
     _updateServiceWorker(registration.active ?? registration.waiting ?? registration.installing);
+  }
+
+  /// Unregisters registrations of a manually copied worker at the app's web
+  /// root (the pre-bundled-asset setup, registered as
+  /// `/js_notifications-sw.js` with scope [defaultScope]).
+  ///
+  Future<void> _unregisterLegacyServiceWorkers(web.ServiceWorkerContainer delegate) async {
+    try {
+      final registrations = (await delegate.getRegistrations().toDart).toDart;
+      for (final registration in registrations) {
+        final worker = registration.active ?? registration.waiting ?? registration.installing;
+        final scriptUrl = worker?.scriptURL;
+        if (scriptUrl == null) {
+          continue;
+        }
+        final isLegacy = scriptUrl.endsWith("/$jsNotificationsSwJs") && !scriptUrl.contains(bundledSwAssetDirMarker);
+        if (isLegacy) {
+          printDebug(
+              "Unregistering legacy js_notifications service worker at '${registration.scope}' ($scriptUrl). "
+              "The service worker is now bundled with the package; the copied file in your web folder can be deleted.",
+              tag: tag);
+          await registration.unregister().toDart;
+        }
+      }
+    } catch (e) {
+      printDebug("Legacy service worker migration check failed: $e", tag: tag);
+    }
+  }
+
+  /// Re-registers this manager's service worker, replacing the previous
+  /// registration (which is unregistered first).
+  ///
+  /// - [url]: script URL of a custom worker (e.g. a copy of
+  ///   `js_notifications-sw.js` extended with app-specific message handling
+  ///   for [postAction] payloads). When null, the **bundled** worker asset is
+  ///   used — pass only [scope] to keep the bundled worker but register it
+  ///   under a custom scope.
+  /// - [scope]: registration scope. When null the browser default (the
+  ///   script's directory) is used. A scope outside the script's directory
+  ///   requires the server to send a `Service-Worker-Allowed` header; for the
+  ///   bundled asset (served from `assets/packages/js_notifications/assets/`)
+  ///   any broader scope — e.g. `/js_notifications/` — needs that header.
+  Future<void> registerServiceWorker({String? url, String? scope}) async {
+    // Never race the automatic bundled registration (and initialise on demand
+    // if the caller never awaited init()).
+    await _ensureInitialized();
+
+    final delegate = _container;
+    if (delegate == null) {
+      printDebug("Service workers are not supported in this browser; cannot register a service worker.", tag: tag);
+      return;
+    }
+
+    try {
+      await _registration?.unregister().toDart;
+    } catch (e) {
+      printDebug("Failed to unregister previous service worker: $e", tag: tag);
+    }
+    _registration = null;
+
+    _customUrl = url;
+    await _register(delegate, url ?? _resolveBundledServiceWorkerUrl(), scope: scope);
+  }
+
+  /// Re-registers the currently registered worker script (bundled, or the
+  /// custom URL last passed to [registerServiceWorker]) under [scope].
+  /// Backs the platform interface's `scopeUrl` setter.
+  Future<void> updateScope(String scope) {
+    return registerServiceWorker(url: _customUrl, scope: scope);
   }
 
   /// Service Worker Container event listeners
@@ -173,8 +350,7 @@ class ServiceWorkerManager {
 
   void _trackInstallingWorker(web.ServiceWorker worker) {
     _installingWorkerStateChangeSubscription?.cancel();
-    _installingWorkerStateChangeSubscription =
-        _stateChangeEvent.forTarget(worker).listen((event) {
+    _installingWorkerStateChangeSubscription = _stateChangeEvent.forTarget(worker).listen((event) {
       final state = worker.state;
       printDebug("Installing service worker state change: $state", tag: tag);
       if (state == _stateActivated) {
@@ -321,6 +497,10 @@ class ServiceWorkerManager {
   }
 
   Future<void> _sendMessage(ServiceWorkerPayload payload) async {
+    // Messages sent before/while init() completes wait for it rather than
+    // being dropped with "No service worker ready".
+    await _ensureInitialized();
+
     final granted = _notificationApi.hasPermission;
     if (!granted) {
       final result = await _notificationApi.requestPermission();
@@ -343,6 +523,9 @@ class ServiceWorkerManager {
     }
   }
 
+  /// Detaches all listeners and resets initialisation state. The registered
+  /// service worker itself is left in place (it outlives the page); calling
+  /// [init] again re-attaches listeners and re-registers.
   Future<void> dispose() async {
     await _serviceWorkerMessageStreamSubscription?.cancel();
     await _containerControllerChangeSubscription?.cancel();
@@ -350,5 +533,18 @@ class ServiceWorkerManager {
     await _serviceWorkerErrorSubscription?.cancel();
     await _registrationUpdateFoundSubscription?.cancel();
     await _installingWorkerStateChangeSubscription?.cancel();
+
+    _serviceWorkerMessageStreamSubscription = null;
+    _containerControllerChangeSubscription = null;
+    _serviceWorkerStateChangeSubscription = null;
+    _serviceWorkerErrorSubscription = null;
+    _registrationUpdateFoundSubscription = null;
+    _installingWorkerStateChangeSubscription = null;
+
+    _serviceWorker = null;
+    _registration = null;
+    _container = null;
+    // Allow init() to run again after disposal.
+    _initFuture = null;
   }
 }

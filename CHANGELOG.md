@@ -1,5 +1,28 @@
 ## Next release
 
+* **Zero-setup service worker**: `js_notifications-sw.js` now ships as a bundled Flutter asset of
+  the package (deployed at `assets/packages/js_notifications/assets/`) and is registered
+  automatically — manually copying the file into your app's `web/` folder is no longer required.
+  Existing copied files can be deleted; legacy registrations are unregistered automatically on
+  startup.
+* Service worker URL now resolves against the document base URI, fixing deployments under a
+  non-root `<base href>`.
+* `ServiceWorkerManager` is now a singleton (`ServiceWorkerManager.instance`, or the factory
+  constructor to assign event callbacks) — a page has one service worker registration, and the
+  manager owns the listeners attached to it.
+* Service worker setup moved out of the `ServiceWorkerManager` constructor into an explicit,
+  idempotent `init()`. The plugin calls it automatically on registration and exposes
+  `initialize()` (returns whether the worker registered) and `isInitialized`. Notifications
+  posted before initialisation completes now wait for it instead of being dropped with
+  "No service worker ready".
+* Added `registerServiceWorker({url, scope})` — replace the bundled worker with a custom script
+  (e.g. custom `sendAction` handling), register the bundled worker under a custom scope, or both.
+  The `scopeUrl` setter now works (previously ineffective): it re-registers the current worker
+  under the new scope. Note: scopes outside the worker script's directory require a
+  `Service-Worker-Allowed` response header from the server.
+* Fixed service worker script bugs: error-logger shadowing in the `showNotification` catch
+  handler, `console.warn` argument spreading; renamed SW log tag `callkit_sw` →
+  `js_notifications_sw`.
 * **WebAssembly support**: full migration off deprecated `dart:html` to `package:web` +
   `dart:js_interop` — the package now compiles with `flutter build web --wasm`.
 * **BREAKING**: `badge` is now `String?` — the URL of the monochrome badge image, per the Web
