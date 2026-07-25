@@ -1,3 +1,15 @@
+## Next release
+
+* **WebAssembly support**: full migration off deprecated `dart:html` to `package:web` +
+  `dart:js_interop` — the package now compiles with `flutter build web --wasm`.
+* **BREAKING**: `vibrate` is now `List<int>?` (previously
+  `web.VibratePattern?`); `package:web` types no longer appear in the public API.
+* **BREAKING**: minimum Flutter version raised to 3.22 (stable WASM toolchain floor).
+* Internal: service worker event wiring now uses `EventStreamProvider` subscriptions; removed
+  ~10 dead no-op event listeners that never fired on page-side objects.
+* Note: under the WASM runtime, integral JS numbers in notification `data` payloads may be
+  delivered back to Dart as `double` — treat round-tripped numbers as `num`.
+
 ## 0.0.5
 
 * Fix `NotificationAPI` late init

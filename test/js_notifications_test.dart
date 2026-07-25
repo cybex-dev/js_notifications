@@ -4,7 +4,6 @@ import 'package:js_notifications/js_notifications_web.dart';
 import 'package:js_notifications/platform_interface/js_notifications_platform_interface.dart';
 import 'package:js_notifications/method_channel/js_notifications_method_channel.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:web/src/dom/vibration.dart';
 
 class MockJsNotificationsPlatform
     with MockPlatformInterfaceMixin
@@ -33,7 +32,7 @@ class MockJsNotificationsPlatform
   @override
   Future<void> showNotification(String title,
       {List<JSNotificationAction>? actions,
-      int? badge,
+      String? badge,
       String? body,
       Map<String, dynamic>? data,
       JSNotificationDirection? dir,
@@ -45,7 +44,7 @@ class MockJsNotificationsPlatform
       bool? silent,
       String? tag,
       int? timestamp,
-      VibratePattern? vibrate}) {
+      List<int>? vibrate}) {
     // TODO: implement showNotification
     throw UnimplementedError();
   }
