@@ -53,7 +53,7 @@ abstract class JsNotificationsPlatform extends PlatformInterface {
   Future<void> showNotification(
     String title, {
     List<interop.JSNotificationAction>? actions,
-    int? badge,
+    String? badge,
     String? body,
     Map<String, dynamic>? data,
     interop.JSNotificationDirection? dir,
