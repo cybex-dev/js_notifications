@@ -85,8 +85,24 @@ class MockJsNotificationsPlatform
 
   @override
   set scopeUrl(String value) {
-    // TODO: implement scopeUrl
+    // Deprecated no-op, retained to satisfy the interface.
   }
+
+  @override
+  Future<void> registerServiceWorker({String? url, String? scope}) {
+    // TODO: implement registerServiceWorker
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<bool> initialize() {
+    // TODO: implement initialize
+    throw UnimplementedError();
+  }
+
+  @override
+  // TODO: implement isInitialized
+  bool get isInitialized => throw UnimplementedError();
 
   @override
   Future<void> dispose() {

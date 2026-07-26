@@ -66,11 +66,41 @@ The Dart Web package is limited in showing notifications, one can only show a ti
 Add the following to your `pubspec.yaml` file:
 ```yaml
 dependencies:
-  js_notifications: ^0.0.3
+  js_notifications: ^0.0.5
 ```
 
-### Copy service worker
-Copy the service worker file named `js_notifications-sw.js` from the `example` directory to your web directory. _The name is very important, so make sure to have the file named `js_notifications-sw.js`._
+That's it — **no further setup is required**. The service worker ships as a bundled asset of the
+package (deployed automatically to `assets/packages/js_notifications/assets/js_notifications-sw.js`
+with every build) and is registered automatically at startup.
+
+#### Upgrading from versions requiring a copied service worker
+
+Previously you had to copy `js_notifications-sw.js` into your app's `web/` folder manually. This is
+no longer needed:
+
+- The plugin automatically unregisters any legacy registration of the copied worker on startup.
+- You can safely delete `web/js_notifications-sw.js` from your project.
+
+#### Custom service worker and/or custom scope (optional)
+
+If you want to extend the service worker (e.g. handle `sendAction` payloads with your own logic),
+copy `assets/js_notifications-sw.js` from this package into your app's `web/` folder (any name),
+modify it, and register it explicitly:
+
+```dart
+await JsNotificationsPlatform.instance.registerServiceWorker(url: "/my_notifications-sw.js");
+```
+
+To keep the bundled worker but register it under a custom scope, omit `url` and pass only `scope`
+(or use the `scopeUrl` setter):
+
+```dart
+await JsNotificationsPlatform.instance.registerServiceWorker(scope: "/js_notifications/");
+```
+
+The previously registered worker is unregistered automatically. Note: a custom `scope` outside the
+worker script's directory requires your server to send a `Service-Worker-Allowed` header — for the
+bundled asset that is any scope broader than its asset directory.
 
 ## Usage
 
@@ -83,6 +113,25 @@ import 'package:js_notifications/js_notifications.dart';
 ```dart
 
 final _jsNotificationsPlugin = JsNotificationsPlatform.instance;
+```
+
+### Initialization (optional)
+
+The service worker registers automatically when the plugin loads, and any notification posted
+before registration finishes is queued rather than dropped — so no explicit call is required.
+
+Await `initialize()` when you want to know whether notifications are actually available (it
+returns `false` when service workers are unsupported, e.g. an insecure context that is neither
+`https` nor `localhost`, or when registration failed):
+
+```dart
+final ready = await _jsNotificationsPlugin.initialize();
+if (!ready) {
+  // service worker unavailable — notifications cannot be shown
+}
+
+// or check synchronously at any point
+final ready = _jsNotificationsPlugin.isInitialized;
 ```
 
 

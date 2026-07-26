@@ -25,7 +25,74 @@ abstract class JsNotificationsPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  set scopeUrl(String value);
+  /// Completes when the plugin's service worker has been registered and its
+  /// event listeners attached.
+  ///
+  /// Initialisation starts automatically when the plugin registers, so
+  /// awaiting this is optional — notifications posted beforehand are queued
+  /// until it completes. Await it when you need to know whether notifications
+  /// are actually available:
+  ///
+  /// ```dart
+  /// if (await JsNotificationsPlatform.instance.initialize()) {
+  ///   // service worker registered — notifications can be shown
+  /// }
+  /// ```
+  ///
+  /// Returns false when service workers are unsupported (an insecure context —
+  /// neither https nor localhost — or an unsupported browser) or registration
+  /// failed. Failures are logged, never thrown. Idempotent.
+  Future<bool> initialize() {
+    throw UnimplementedError('initialize() has not been implemented.');
+  }
+
+  /// Whether the service worker is registered and ready. See [initialize].
+  bool get isInitialized =>
+      throw UnimplementedError('isInitialized has not been implemented.');
+
+  /// Updates the scope the plugin's service worker is registered under by
+  /// re-registering the currently registered worker script (bundled or
+  /// custom) with [value] as its scope. Fire-and-forget — prefer
+  /// [registerServiceWorker] to await completion, register a custom worker
+  /// script, or both.
+  ///
+  /// Scope caveat: a scope outside the worker script's directory requires the
+  /// server to send a `Service-Worker-Allowed` response header (always the
+  /// case for scopes broader than `assets/packages/js_notifications/assets/`
+  /// when using the bundled worker).
+  set scopeUrl(String value) {
+    throw UnimplementedError('scopeUrl has not been implemented.');
+  }
+
+  /// Re-registers the plugin's service worker with a custom [url] and/or
+  /// [scope], replacing the automatically registered bundled worker.
+  ///
+  /// - [url]: script URL of a custom worker — e.g. a copy of
+  ///   `js_notifications-sw.js` extended with app-specific message handling
+  ///   (see [sendAction]). When null, the **bundled** worker asset is used —
+  ///   pass only [scope] to keep the bundled worker but register it under a
+  ///   custom scope:
+  ///
+  /// ```dart
+  /// // bundled worker, custom scope
+  /// await JsNotificationsPlatform.instance
+  ///     .registerServiceWorker(scope: "/js_notifications/");
+  ///
+  /// // custom worker, default scope
+  /// await JsNotificationsPlatform.instance
+  ///     .registerServiceWorker(url: "/my_notifications-sw.js");
+  /// ```
+  ///
+  /// - [scope]: registration scope. When null the browser default (the
+  ///   script's directory) is used. A scope outside the script's directory
+  ///   requires the server to send a `Service-Worker-Allowed` response
+  ///   header — for the bundled asset (served from
+  ///   `assets/packages/js_notifications/assets/`) any broader scope needs
+  ///   that header configured on the hosting server.
+  Future<void> registerServiceWorker({String? url, String? scope}) {
+    throw UnimplementedError(
+        'registerServiceWorker() has not been implemented.');
+  }
 
   Future<String?> getPlatformVersion();
 

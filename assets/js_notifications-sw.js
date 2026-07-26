@@ -1,4 +1,4 @@
-const tag = "callkit_sw";
+const tag = "js_notifications_sw";
 
 // const log = (...message) => {
 //     console.log(`[ ${tag} ]`, ...message);
@@ -7,7 +7,7 @@ const error = (...message) => {
     console.error(`[ ${tag} ]`, ...message);
 };
 const warn = (...message) => {
-    console.warn(`[ ${tag} ]`, message);
+    console.warn(`[ ${tag} ]`, ...message);
 };
 
 const matchOptions = {
@@ -89,8 +89,8 @@ const showNotification = async (title, options) => {
         return;
     }
 
-    self.registration.showNotification(title, options).catch((error) => {
-        error('Error showing notification', error);
+    self.registration.showNotification(title, options).catch((err) => {
+        error('Error showing notification', err);
     });
 }
 
