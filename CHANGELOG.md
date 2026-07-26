@@ -1,4 +1,4 @@
-## Next release
+## 1.0.0
 
 * **Zero-setup service worker**: `js_notifications-sw.js` now ships as a bundled Flutter asset of
   the package (deployed at `assets/packages/js_notifications/assets/`) and is registered
