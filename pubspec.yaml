@@ -12,7 +12,8 @@ topics:
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
-  flutter: '>=3.3.0'
+  # 3.22 is the floor for stable WebAssembly (dart2wasm) builds.
+  flutter: '>=3.22.0'
 
 dependencies:
   flutter:
@@ -49,6 +50,14 @@ flutter:
       web:
         pluginClass: JsNotificationsWeb
         fileName: js_notifications_web.dart
+
+  # The bundled service worker script. Declaring it here makes Flutter deploy it
+  # with every consuming app at:
+  #   assets/packages/js_notifications/assets/js_notifications-sw.js
+  # which the plugin registers automatically at runtime — no manual copying of
+  # the service worker into the app's web/ folder is required.
+  assets:
+    - assets/js_notifications-sw.js
 
   # To add assets to your plugin package, add an assets section, like this:
   # assets:

@@ -1,12 +1,6 @@
-// In order to *not* need this ignore, consider extracting the "web" version
-// of your plugin as a separate package, instead of inlining it in the same
-// package as the core of your plugin.
-// ignore: avoid_web_libraries_in_flutter
-
 import 'dart:async';
 
 import 'package:flutter_web_plugins/flutter_web_plugins.dart';
-import 'package:js_notifications/const/const.dart';
 import 'package:js_notifications/interop/interop.dart' as interop;
 import 'package:js_notifications/managers/service_worker_manager.dart';
 import 'package:simple_print/simple_print.dart';
@@ -35,8 +29,6 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   StreamController<NotificationActionResult>? _actionStream;
   StreamController<NotificationActionResult>? _tapStream;
 
-  static String _scopeUrl = defaultScope;
-
   /// Constructs a JsNotificationsWeb
   JsNotificationsWeb._() {
     setAppTag("js_notifications");
@@ -55,9 +47,18 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
       onNotificationTap: _onNotificationTap,
       onNotificationAction: _onNotificationAction,
       onNotificationDismiss: _onNotificationDismiss,
-      scopeUrl: _scopeUrl,
     );
+
+    _initFuture = serviceWorkerManager.init();
   }
+
+  late final Future<bool> _initFuture;
+
+  @override
+  Future<bool> initialize() => _initFuture;
+
+  @override
+  bool get isInitialized => serviceWorkerManager.isInitialized;
 
   void _startEventListeners() {
     _dismissSubscription = dismissStream.listen((event) {
@@ -79,7 +80,14 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
 
   @override
   set scopeUrl(String value) {
-    _scopeUrl = value;
+    // Fire-and-forget by nature of a setter; awaits the initial registration
+    // internally, then re-registers the current worker under the new scope.
+    unawaited(serviceWorkerManager.updateScope(value));
+  }
+
+  @override
+  Future<void> registerServiceWorker({String? url, String? scope}) {
+    return serviceWorkerManager.registerServiceWorker(url: url, scope: scope);
   }
 
   @override
@@ -127,7 +135,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
   Future<void> showNotification(
     String title, {
     List<interop.JSNotificationAction>? actions,
-    int? badge,
+    String? badge,
     String? body,
     Map<String, dynamic>? data,
     interop.JSNotificationDirection? dir,
@@ -139,7 +147,7 @@ class JsNotificationsWeb extends JsNotificationsPlatform {
     bool? silent,
     String? tag,
     int? timestamp,
-    web.VibratePattern? vibrate,
+    List<int>? vibrate,
   }) {
     final options = interop.JSNotificationOptions(
       actions: actions,

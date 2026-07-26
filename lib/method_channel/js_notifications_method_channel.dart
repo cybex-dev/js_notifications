@@ -1,6 +1,5 @@
 import 'package:flutter/services.dart';
 import 'package:js_notifications/core/notification_action_result.dart';
-import 'package:web/web.dart';
 
 import '../platform_interface/js_notifications_platform_interface.dart';
 import '../interop/interop.dart' as interop;
@@ -52,7 +51,7 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   @override
   Future<void> showNotification(String title,
       {List<interop.JSNotificationAction>? actions,
-      int? badge,
+      String? badge,
       String? body,
       Map<String, dynamic>? data,
       interop.JSNotificationDirection? dir,
@@ -64,7 +63,7 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
       bool? silent,
       String? tag,
       int? timestamp,
-      VibratePattern? vibrate}) {
+      List<int>? vibrate}) {
     // TODO: implement showNotification
     throw UnimplementedError();
   }
@@ -86,10 +85,6 @@ class MethodChannelJsNotifications extends JsNotificationsPlatform {
   @override
   Stream<NotificationActionResult> get tapStream => throw UnimplementedError();
 
-  @override
-  set scopeUrl(String value) {
-    // TODO: implement scopeUrl
-  }
 
   @override
   Future<List<interop.JSNotification>> getAllNotifications() {

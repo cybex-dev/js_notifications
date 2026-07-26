@@ -1,5 +1,3 @@
-import 'package:web/web.dart';
-
 import '../../core/serializable.dart';
 import 'enums.dart';
 import 'js_notification_action.dart';
@@ -11,8 +9,11 @@ class JSNotificationOptions implements Serializable {
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/actions
   final List<JSNotificationAction>? actions;
 
+  /// URL of the monochrome badge image (not a number — for numeric app badges
+  /// see the separate Badging API, `navigator.setAppBadge`).
+  ///
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/badge
-  final int? badge;
+  final String? badge;
 
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/body
   final String? body;
@@ -47,8 +48,11 @@ class JSNotificationOptions implements Serializable {
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/timestamp
   final int? timestamp;
 
+  /// Vibration pattern: alternating vibrate/pause durations in milliseconds,
+  /// e.g. `[200, 100, 200]`.
+  ///
   /// See: https://developer.mozilla.org/en-US/docs/Web/API/Notification/vibrate
-  final VibratePattern? vibrate;
+  final List<int>? vibrate;
 
   JSNotificationOptions({
     this.actions,
@@ -88,7 +92,7 @@ class JSNotificationOptions implements Serializable {
 
   JSNotificationOptions copyWith({
     List<JSNotificationAction>? actions,
-    int? badge,
+    String? badge,
     String? body,
     Map<String, dynamic>? data,
     JSNotificationDirection? dir,
@@ -100,7 +104,7 @@ class JSNotificationOptions implements Serializable {
     bool? silent,
     String? tag,
     int? timestamp,
-    VibratePattern? vibrate,
+    List<int>? vibrate,
   }) {
     return JSNotificationOptions(
       actions: actions ?? this.actions,
